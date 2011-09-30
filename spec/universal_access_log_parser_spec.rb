@@ -4,7 +4,11 @@ require 'time'
 
 describe 'UniversalAccessLogParser' do
 	before :all do
-		@apache_line = '95.221.65.17 sigquit.net - [29/Sep/2011:17:38:06 +0100] "GET / HTTP/1.0" 200 1 "http://yandex.ru/yandsearch?text=sigquit.net" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)" "/var/www/localhost/./index.html"'
+		@apache_lines = [
+			'95.221.65.17 sigquit.net - [29/Sep/2011:17:38:06 +0100] "GET / HTTP/1.0" 200 1 "http://yandex.ru/yandsearch?text=sigquit.net" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)" "/var/www/localhost/./index.html"',
+			'87.18.183.252 - - [13/Aug/2008:00:50:49 -0700] "GET /blog/index.xml HTTP/1.1" 302 527 "-" "Feedreader 3.13 (Powered by Newsbrain)"'
+		]
+
 		@iis_line = '2011-06-20 00:00:00 83.222.242.43 GET /SharedControls/getListingThumbs.aspx img=48,13045,27801,25692,35,21568,21477,21477,10,18,46,8&premium=0|1|0|0|0|0|0|0|0|0|0|0&h=100&w=125&pos=175&scale=true 80 - 92.20.10.104 Mozilla/4.0+(compatible;+MSIE+8.0;+Windows+NT+6.1;+Trident/4.0;+GTB6.6;+SLCC2;+.NET+CLR+2.0.50727;+.NET+CLR+3.5.30729;+.NET+CLR+3.0.30729;+Media+Center+PC+6.0;+aff-kingsoft-ciba;+.NET4.0C;+MASN;+AskTbSTC/5.8.0.12304) 200 0 0 609'
 	end
 
@@ -259,7 +263,7 @@ describe 'UniversalAccessLogParser' do
 	end
 
 	it 'can parse NCSA logs' do
-				p = UniversalAccessLogParser.new do
+				parser = UniversalAccessLogParser.new do
 					ip :client_ip
 					string :host_name
 					string :login
@@ -282,15 +286,17 @@ describe 'UniversalAccessLogParser' do
 					double_quoted do
 						string :file
 					end
-				end.parse(@apache_line)
-				puts p.inspect
+				end
+				p parser
+				data = parser.parse(@apache_lines[0])
+				p data
 
-				p.client_ip.should == IP.new('95.221.65.17')
-				p.host_name.should == 'sigquit.net'
-				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
-				p.status.should == 200
-				p.uri.should == '/'
-				p.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+				data.client_ip.should == IP.new('95.221.65.17')
+				data.host_name.should == 'sigquit.net'
+				data.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				data.status.should == 200
+				data.uri.should == '/'
+				data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
 	end
 end
 

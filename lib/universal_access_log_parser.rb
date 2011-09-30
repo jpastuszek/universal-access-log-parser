@@ -21,22 +21,7 @@ class UniversalAccessLogParser
 			instance_eval &block
 		end
 
-		def separated_with(separator, &block)
-			push ElementGroup.new(separator, [], &block)
-		end
-
-		def surrounded_by(sstart, send, &block)
-			push ElementGroup.new(@separator, [sstart, send], &block)
-		end
-
-		def single_quoted(&block)
-			surrounded_by("'", "'", &block)
-		end
-
-		def double_quoted(&block)
-			surrounded_by('"', '"', &block)
-		end
-
+		# getters
 		def regexp
 			ss = (@surrounded_by[0] or '')
 			se = (@surrounded_by[1] or '')
@@ -62,6 +47,27 @@ class UniversalAccessLogParser
 					e
 				end
 			end.flatten
+		end
+
+		# DSL
+		def separated_with(separator, &block)
+			push ElementGroup.new(separator, [], &block)
+		end
+
+		def surrounded_by(sstart, send, &block)
+			push ElementGroup.new(@separator, [sstart, send], &block)
+		end
+
+		def element(name, regexp, &parser)
+			push Element.new(name, regexp, &parser)
+		end
+
+		def single_quoted(&block)
+			surrounded_by("'", "'", &block)
+		end
+
+		def double_quoted(&block)
+			surrounded_by('"', '"', &block)
 		end
 
 		def date_ncsa(name)
@@ -103,37 +109,33 @@ class UniversalAccessLogParser
 				end
 			end
 		end
-
-		def element(name, regexp, &parser)
-			push Element.new(name, regexp, &parser)
-		end
 	end
 
+
 	def initialize(&block)
+		@@parser_id ||= 0
+		@@parser_id += 1
+
 		@elements = ElementGroup.new(' ', &block)
 
-		@parsed_line_class = Struct.new(*@elements.names)
+		@parsed_log_entry_class = Struct.new("ParsedLogEntry#{@@parser_id}", *@elements.names)
 		@regexp = Regexp.new(@elements.regexp)
 	end
 
-	def regexp
-		@regexp
-	end
-
 	def parse(line)
-		p self
-		p line
-		full_string, *strings = @regexp.match(line).to_a
+		matched, *strings = @regexp.match(line).to_a
+
 		return nil if strings.empty?
-		data = []
-		@elements.parsers.zip(strings).each do |element, string|
-			data << element.parser.call(string)
+
+		data = @elements.parsers.zip(strings).map do |element, string|
+			element.parser.call(string)
 		end
-		@parsed_line_class.new(*data)
+
+		@parsed_log_entry_class.new(*data)
 	end
 
 	def inspect
-		"#<#{self.class.name}:#{regexp.inspect}>"
+		"#<#{self.class.name}:#{@regexp.inspect} => #{@elements.names.join(' ')}>"
 	end
 end
 
