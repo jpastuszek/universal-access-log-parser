@@ -21,7 +21,6 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				p e
 				e.names.should == [:test1, :test2, :test3, :test4, :test5, :test6]
 			end
 
@@ -36,7 +35,6 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				p e
 				e.regexp.should == 'test1 test2 test3,test4 test5 test6'
 			end
 		end
@@ -55,21 +53,44 @@ describe 'UniversalAccessLogParser' do
 
 		describe 'date' do
 			it 'in custom format' do
-				UniversalAccessLogParser.new do
+				p = UniversalAccessLogParser.new do
+					string :test1
 					date :date, '%d.%b.%Y %H:%M:%S %z'
-				end.parse('29.Sep.2011 17:38:06 +0100').date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+					string :test2
+				end.parse('hello 29.Sep.2011 17:38:06 +0100 world')
+
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
 			end
 
 			it 'in NCSA format' do
-				UniversalAccessLogParser.new do
+				p = UniversalAccessLogParser.new do
+					string :test1
 					date_ncsa :date
-				end.parse('29/Sep/2011:17:38:06 +0100').date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+					string :test2
+				end.parse('hello 29/Sep/2011:17:38:06 +0100 world')
+
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
 			end
 
 			it 'in IIS format' do
-				UniversalAccessLogParser.new do
+				p = UniversalAccessLogParser.new do
+					string :test1
 					date_iis :date
-				end.parse('2011-06-20 00:00:01').date.to_i.should == Time.parse('Mon Jun 20 00:00:01 +0000 2011').to_i
+					string :test2
+				end.parse('hello 2011-06-20 00:00:01 world')
+
+				p.date.to_i.should == Time.parse('Mon Jun 20 00:00:01 +0000 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+		end
+
+		describe 'IP' do
+			it 'in v4 format' do
 			end
 		end
 	end

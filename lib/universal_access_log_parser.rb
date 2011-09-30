@@ -45,7 +45,7 @@ class UniversalAccessLogParser
 		end
 
 		def date(name, format = '%d/%b/%Y:%H:%M:%S %z', options = {})
-			regex = '(' + format.gsub(/%./, '.+').gsub(/\//, '\\/') + ')'
+			regex = '(' + Regexp.escape(format).gsub(/%./, '.+').gsub(/\//, '\\/') + ')'
 			element(name, regex) do |match|
 				DateTime.strptime(match, format).new_offset(0).instance_eval do
 					Time.utc(year, mon, mday, hour, min, sec + sec_fraction)
@@ -63,7 +63,7 @@ class UniversalAccessLogParser
 		end
 
 		def string(name)
-			element(name, "([^ ]*)"){|s| s}
+			element(name, "(.*)"){|s| s}
 		end
 
 		def element(name, regexp, &parser)
