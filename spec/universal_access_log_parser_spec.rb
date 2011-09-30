@@ -37,6 +37,20 @@ describe 'UniversalAccessLogParser' do
 				end
 				e.regexp.should == 'test1 test2 test3,test4 test5 test6'
 			end
+
+			it '#parser should return array of all element parsers' do
+				e = UniversalAccessLogParser::ElementGroup.new(' ') do
+					element :test1, 'test1'
+					element :test2, 'test2'
+					separated_with ',' do
+						element :test3, 'test3'
+						element :test4, 'test4'
+					end
+					element :test5, 'test5'
+					element :test6, 'test6'
+				end
+				e.parsers.should have(6).elements
+			end
 		end
 	end
 
@@ -196,6 +210,50 @@ describe 'UniversalAccessLogParser' do
 				p.test2.should == 'world'
 			end
 		end
+	end
+
+	describe 'with quoted/surrounded strings' do
+			it 'by []' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					surrounded_by '[', ']' do
+						date :date, '%d.%b.%Y %H:%M:%S %z'
+					end
+					string :test2
+				end.parse('hello [29.Sep.2011 17:38:06 +0100] world')
+
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'single quoted' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					single_quoted do
+						date :date, '%d.%b.%Y %H:%M:%S %z'
+					end
+					string :test2
+				end.parse("hello '29.Sep.2011 17:38:06 +0100' world")
+
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'double quoted' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					double_quoted do
+						date :date, '%d.%b.%Y %H:%M:%S %z'
+					end
+					string :test2
+				end.parse('hello "29.Sep.2011 17:38:06 +0100" world')
+
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
 	end
 
 #  it 'can be defined with DSL' do

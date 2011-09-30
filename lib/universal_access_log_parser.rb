@@ -15,25 +15,51 @@ class UniversalAccessLogParser
 			attr_reader :name, :regexp, :parser
 		end
 
-		def initialize(separator, &block)
+		def initialize(separator, surrounded_by = [], &block)
 			@separator = separator
+			@surrounded_by = surrounded_by.map{|e| Regexp.escape(e)}
 			instance_eval &block
 		end
 
 		def separated_with(separator, &block)
-			push ElementGroup.new(separator, &block)
+			push ElementGroup.new(separator, [], &block)
+		end
+
+		def surrounded_by(sstart, send, &block)
+			push ElementGroup.new(@separator, [sstart, send], &block)
+		end
+
+		def single_quoted(&block)
+			surrounded_by("'", "'", &block)
+		end
+
+		def double_quoted(&block)
+			surrounded_by('"', '"', &block)
 		end
 
 		def regexp
-			map{|e| e.regexp}.join(@separator)
+			ss = (@surrounded_by[0] or '')
+			se = (@surrounded_by[1] or '')
+
+			map{|e| ss + e.regexp + se}.join(@separator)
 		end
 		
 		def names
-			names = map do |e|
+			map do |e|
 				if e.class == ElementGroup
 					e.names
 				else
 					e.name
+				end
+			end.flatten
+		end
+
+		def parsers
+			map do |e|
+				if e.class == ElementGroup
+					e.parsers
+				else
+					e
 				end
 			end.flatten
 		end
@@ -100,7 +126,7 @@ class UniversalAccessLogParser
 		full_string, *strings = @regexp.match(line).to_a
 		return nil if strings.empty?
 		data = []
-		@elements.zip(strings).each do |element, string|
+		@elements.parsers.zip(strings).each do |element, string|
 			data << element.parser.call(string)
 		end
 		@parsed_line_class.new(*data)
