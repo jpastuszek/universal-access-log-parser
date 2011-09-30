@@ -131,11 +131,67 @@ describe 'UniversalAccessLogParser' do
 			it 'signed' do
 				p = UniversalAccessLogParser.new do
 					string :test1
-					integer :number
+					integer :number1
+					integer :number2
 					string :test2
-				end.parse('hello -1234 world')
+				end.parse('hello -1234 +1235 world')
 
-				p.number.should == -1234
+				p.number1.should == -1234
+				p.number2.should == 1235
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+		end
+
+		describe 'float' do
+			it 'with dot unsigned' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					float :number
+					string :test2
+				end.parse('hello 123.4 world')
+
+				p.number.should == 123.4
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'whitout dot unsigned' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					float :number
+					string :test2
+				end.parse('hello 1234 world')
+
+				p.number.should == 1234.0
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'with dot signed' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					float :number1
+					float :number2
+					string :test2
+				end.parse('hello -123.4 +123.5 world')
+
+				p.number1.should == -123.4
+				p.number2.should == 123.5
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'whitout dot signed' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					float :number1
+					float :number2
+					string :test2
+				end.parse('hello -1234 +1235 world')
+
+				p.number1.should == -1234.0
+				p.number2.should == 1235.0
 				p.test1.should == 'hello'
 				p.test2.should == 'world'
 			end

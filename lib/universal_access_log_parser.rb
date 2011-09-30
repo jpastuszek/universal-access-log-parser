@@ -61,10 +61,11 @@ class UniversalAccessLogParser
 		end
 
 		def integer(name)
-			element(name, '(\+|-?\d+)'){|s| s.to_i}
+			element(name, '([\+|-]?\d+)'){|s| s.to_i}
 		end
 
-		def float
+		def float(name)
+			element(name, '([\+|-]?\d+\.?\d*)'){|s| s.to_f}
 		end
 
 		def string(name)
@@ -95,6 +96,7 @@ class UniversalAccessLogParser
 
 	def parse(line)
 		p self
+		p line
 		full_string, *strings = @regexp.match(line).to_a
 		return nil if strings.empty?
 		data = []
