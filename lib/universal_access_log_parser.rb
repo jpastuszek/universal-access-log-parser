@@ -1,3 +1,5 @@
+require 'ip'
+
 class UniversalAccessLogParser
 	class ParserBase
 	end
@@ -53,17 +55,26 @@ class UniversalAccessLogParser
 			end
 		end
 
-		def ip
+		def ip(name)
+			#element(name, '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'){|s| IP.new(s)}
+			string(name){|s| IP.new(s)}
 		end
 
-		def integer
+		def integer(name)
+			element(name, '(\+|-?\d+)'){|s| s.to_i}
 		end
 
 		def float
 		end
 
 		def string(name)
-			element(name, "(.*)"){|s| s}
+			element(name, "(.*)") do |s|
+				if block_given?
+					yield s 
+				else
+					s
+				end
+			end
 		end
 
 		def element(name, regexp, &parser)

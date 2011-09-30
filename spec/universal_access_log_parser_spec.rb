@@ -91,6 +91,53 @@ describe 'UniversalAccessLogParser' do
 
 		describe 'IP' do
 			it 'in v4 format' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					ip :ip
+					string :test2
+				end.parse('hello 192.168.1.2 world')
+
+				p.ip.should == IP.new("192.168.1.2")
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'in v6 format' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					ip :ip
+					string :test2
+				end.parse('hello 2001:db8:be00:: world')
+
+				p.ip.should == IP.new("2001:db8:be00::")
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+		end
+
+		describe 'integer' do
+			it 'unsigned' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					integer :number
+					string :test2
+				end.parse('hello 1234 world')
+
+				p.number.should == 1234
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
+			end
+
+			it 'signed' do
+				p = UniversalAccessLogParser.new do
+					string :test1
+					integer :number
+					string :test2
+				end.parse('hello -1234 world')
+
+				p.number.should == -1234
+				p.test1.should == 'hello'
+				p.test2.should == 'world'
 			end
 		end
 	end
