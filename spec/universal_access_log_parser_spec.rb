@@ -246,26 +246,51 @@ describe 'UniversalAccessLogParser' do
 					string :test1
 					double_quoted do
 						date :date, '%d.%b.%Y %H:%M:%S %z'
+						integer :number
 					end
 					string :test2
-				end.parse('hello "29.Sep.2011 17:38:06 +0100" world')
+				end.parse('hello "29.Sep.2011 17:38:06 +0100 123" world')
 
 				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.number.should == 123
 				p.test1.should == 'hello'
 				p.test2.should == 'world'
 			end
 	end
 
-#  it 'can be defined with DSL' do
-#		UniversalAccessLogParser.new do
-#			date :date
-#			ip :server_ip
-#			string :method
-#			string :url
-#			string :query
-#			integer :port
-#			string :user_aget, {|ua| ua.tr('+', ' ')}
-#			string :first_line, :quoted => true
-#		end
-#  end
+	it 'can parse NCSA logs' do
+				p = UniversalAccessLogParser.new do
+					ip :client_ip
+					string :host_name
+					string :login
+					surrounded_by '[', ']' do
+						date_ncsa :date
+					end
+					double_quoted do
+						string :method
+						string :uri
+						string :protocol
+					end
+					integer :status
+					integer :bytes
+					double_quoted do
+						string :referer
+					end
+					double_quoted do
+						string :user_agent
+					end
+					double_quoted do
+						string :file
+					end
+				end.parse(@apache_line)
+				puts p.inspect
+
+				p.client_ip.should == IP.new('95.221.65.17')
+				p.host_name.should == 'sigquit.net'
+				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+				p.status.should == 200
+				p.uri.should == '/'
+				p.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+	end
 end
+

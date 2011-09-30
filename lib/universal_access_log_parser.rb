@@ -41,7 +41,7 @@ class UniversalAccessLogParser
 			ss = (@surrounded_by[0] or '')
 			se = (@surrounded_by[1] or '')
 
-			map{|e| ss + e.regexp + se}.join(@separator)
+			ss + map{|e| e.regexp}.join(@separator) + se
 		end
 		
 		def names
