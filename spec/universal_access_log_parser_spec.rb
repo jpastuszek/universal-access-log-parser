@@ -1,4 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'universal_access_log_parser'
 require 'time'
 
 describe 'UniversalAccessLogParser' do
