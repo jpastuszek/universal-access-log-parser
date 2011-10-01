@@ -146,23 +146,6 @@ class UniversalAccessLogParser
 		end
 	end
 
-	class Entry < Struct.new(:name, :parser)
-	end
-
-	class ElementParserSet
-		def initialize(names, parsers)
-			@names = []
-			@parsers = {}
-
-			names.zip(parsers).each do |name, parser|
-				@names << name
-				@parsers[name] = parser
-			end
-		end
-
-		attr_reader :names, :parsers
-	end
-
 	def initialize(&block)
 		@@parser_id ||= 0
 		@@parser_id += 1
@@ -172,36 +155,40 @@ class UniversalAccessLogParser
 
 		@regexp = Regexp.new('^' + @elements.regexp + '$')
 
-		@element_parser_set = ElementParserSet.new(@elements.names, @elements.parsers)
+		@names = @elements.names
+
+		@parsers = {}
+		@names.zip(@elements.parsers).each do |name, parser|
+			@parsers[name] = parser
+		end
 
 		@parsed_log_entry_class = Class.new do
-			def self.make_metods(element_parser_set)
-				element_parser_set.names.each do |name|
-					m = """
+			def self.make_metods(names)
+				names.each do |name|
+					class_eval """
 						def #{name}
 							return @cache[:#{name}] if @cache.member? :#{name}
-							value = @element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
+							value = @parsers[:#{name}].call(@strings[:#{name}])
 							@cache[:#{name}] = value
 							value
 						end
 					"""
-					#puts m
-					class_eval m
 				end
 			end
 
-			def initialize(element_parser_set, strings)
-				@strings = {}
-				@element_parser_set = element_parser_set
+			def initialize(names, parsers, strings)
+				@parsers = parsers
 
-				@element_parser_set.names.zip(strings).each do |name, string|
+				@strings = {}
+				names.zip(strings).each do |name, string|
 					@strings[name] = string
 				end
 
 				@cache = {}
 			end
 		end
-		@parsed_log_entry_class.make_metods(@element_parser_set)
+
+		@parsed_log_entry_class.make_metods(@names)
 	end
 
 	def self.parser(name, &block)
@@ -219,7 +206,7 @@ class UniversalAccessLogParser
 
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
-		@parsed_log_entry_class.new(@element_parser_set, strings)
+		@parsed_log_entry_class.new(@names, @parsers, strings)
 	end
 
 	def inspect
