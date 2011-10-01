@@ -173,25 +173,17 @@ class UniversalAccessLogParser
 		@regexp = Regexp.new(@elements.regexp)
 	end
 
-	def self.apache_common
-		self.new{ apache_common }
+	def self.parser(*names)
+		names.each do |name|
+			eval """
+				def self.#{name}
+						self.new{ #{name} }
+				end
+			"""
+		end
 	end
 
-	def self.apache_vhost_common
-		self.new{ apache_vhost_common }
-	end
-
-	def self.apache_combined
-		self.new{ apache_combined }
-	end
-
-	def self.apache_referer
-		self.new{ apache_referer }
-	end
-
-	def self.apache_user_agent
-		self.new{ apache_user_agent }
-	end
+	parser :apache_common, :apache_vhost_common, :apache_combined, :apache_referer, :apache_user_agent
 
 	def parse(line)
 		matched, *strings = @regexp.match(line).to_a
