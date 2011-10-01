@@ -319,5 +319,19 @@ describe 'UniversalAccessLogParser' do
 		data.user.should == 'test'
 		data.other.should == 'a b cdef'
 	end
+
+	it 'should have nil other if there was no additional data in the log line' do
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+		end
+
+		data = parser.parse('123.123.123.213 kazuya test')
+		data.remote_host.should == IP.new('123.123.123.213')
+		data.logname.should == 'kazuya'
+		data.user.should == 'test'
+		data.other.should == nil
+	end
 end
 

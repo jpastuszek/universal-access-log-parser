@@ -47,15 +47,15 @@ class UniversalAccessLogParser
 		end
 		
 		def names
-			names = map do |e|
+			n = map do |e|
 				if e.class == ElementGroup
 					e.names
 				else
 					e.name
 				end
 			end.flatten
-			names << :other if @other
-			names
+			n << :other if @other
+			n
 		end
 
 		def parsers
@@ -66,7 +66,10 @@ class UniversalAccessLogParser
 					e.parser
 				end
 			end.flatten
-			p << lambda{|s| s.sub(Regexp.new("^#{@separator}"), '')} if @other
+			p << lambda do |s|
+				return nil if s.empty?
+				s.sub(Regexp.new("^#{@separator}"), '')
+			end if @other
 			p
 		end
 

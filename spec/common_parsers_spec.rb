@@ -106,6 +106,7 @@ describe UniversalAccessLogParser do
 			data.response_size.should == 1
 			data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
 			data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)'
+			data.other.should == nil
 
 			parser = UniversalAccessLogParser.apache_combined
 			data = parser.parse(@apache_combined[1])
@@ -158,6 +159,24 @@ describe UniversalAccessLogParser do
 			data.response_size.should == 60662
 			data.referer.should == nil
 			data.user_agent.should == 'test test test'
+		end
+
+		it 'Apache combined with other data' do
+			parser = UniversalAccessLogParser.apache_combined
+			data = parser.parse(@apache_combined[0] + ' hello world')
+
+			data.remote_host.should == IP.new('95.221.65.17')
+			data.logname.should == 'kazuya'
+			data.user.should == nil
+			data.time.to_i.should == Time.parse('Thu Sep 29 17:38:06 +0100 2011').to_i
+			data.method.should == 'GET'
+			data.uri.should == '/'
+			data.protocol.should == 'HTTP/1.0'
+			data.status.should == 200
+			data.response_size.should == 1
+			data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+			data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)'
+			data.other.should == 'hello world'
 		end
 
 		it 'Apache combined with extra data' do
