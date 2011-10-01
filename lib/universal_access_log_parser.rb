@@ -120,46 +120,8 @@ class UniversalAccessLogParser
 			end
 		end
 
-		def apache_common
-			ip :remote_host
-			string :logname, :nil_on => '-'
-			string :user, :nil_on => '-'
-			surrounded_by '[', ']' do
-				date_ncsa :time
-			end
-			double_quoted do
-				string :method, :nil_on => ''
-				string :uri, :nil_on => ''
-				string :protocol, :nil_on => ''
-			end
-			integer :status
-			integer :response_size, :nil_on => '-'
-		end
-
-		def apache_vhost_common
-			string :vhost
-			apache_common
-		end
-
-		def apache_combined
-			apache_common
-			double_quoted do
-				string :referer, :nil_on => '-'
-			end
-			double_quoted do
-				string :user_agent, :nil_on => '-'
-			end
-		end
-
-		def apache_referer
-			separated_with ' -> ' do
-				string :referer, :nil_on => '-'
-				string :url
-			end
-		end
-
-		def apache_user_agent
-			string :user_agent, :nil_on => '-'
+		def self.parser(name, &block)
+			define_method(name, &block)
 		end
 	end
 
@@ -173,17 +135,15 @@ class UniversalAccessLogParser
 		@regexp = Regexp.new(@elements.regexp)
 	end
 
-	def self.parser(*names)
-		names.each do |name|
-			eval """
-				def self.#{name}
-						self.new{ #{name} }
-				end
-			"""
-		end
-	end
+	def self.parser(name, &block)
+		ElementGroup.parser(name, &block)
 
-	parser :apache_common, :apache_vhost_common, :apache_combined, :apache_referer, :apache_user_agent
+		eval """
+			def self.#{name}
+					self.new{ #{name} }
+			end
+		"""
+	end
 
 	def parse(line)
 		matched, *strings = @regexp.match(line).to_a
@@ -201,4 +161,6 @@ class UniversalAccessLogParser
 		"#<#{self.class.name}:#{@regexp.inspect} => #{@elements.names.join(' ')}>"
 	end
 end
+
+require 'common_parsers'
 
