@@ -33,7 +33,7 @@ describe 'UniversalAccessLogParser' do
 		]
 
 		# "%{User-agent}i"
-		@apache_browser = [
+		@apache_user_agent = [
 			'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
 		]
 
@@ -482,6 +482,13 @@ describe 'UniversalAccessLogParser' do
 
 			data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
 			data.url.should == '/wordpress3/wp-admin/admin-ajax.php'
+		end
+
+		it 'Apache user agent' do
+			parser = UniversalAccessLogParser.apache_user_agent
+			data = parser.parse(@apache_user_agent[0])
+
+			data.user_agent.should == 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
 		end
 	end
 end
