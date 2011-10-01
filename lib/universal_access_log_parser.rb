@@ -136,20 +136,13 @@ class UniversalAccessLogParser
 			integer :response_size, :nil_on => '-'
 		end
 
+		def apache_vhost_common
+			string :vhost
+			apache_common
+		end
+
 		def apache_combined
-			ip :remote_host
-			string :logname, :nil_on => '-'
-			string :user, :nil_on => '-'
-			surrounded_by '[', ']' do
-				date_ncsa :time
-			end
-			double_quoted do
-				string :method, :nil_on => ''
-				string :uri, :nil_on => ''
-				string :protocol, :nil_on => ''
-			end
-			integer :status
-			integer :response_size, :nil_on => '-'
+			apache_common
 			double_quoted do
 				string :referer, :nil_on => '-'
 			end
@@ -171,6 +164,14 @@ class UniversalAccessLogParser
 
 	def self.apache_common
 		self.new{ apache_common }
+	end
+
+	def self.apache_vhost_common
+		self.new{ apache_vhost_common }
+	end
+
+	def self.apache_combined
+		self.new{ apache_combined }
 	end
 
 	def parse(line)

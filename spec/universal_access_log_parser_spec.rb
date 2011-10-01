@@ -11,7 +11,7 @@ describe 'UniversalAccessLogParser' do
 		]
 		# "%v %h %l %u %t \"%r\" %>s %b"
 		@apache_vhost_common = [
-			'sigquit.net 172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -'
+			'sigquit.net 127.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -'
 		]
 		# "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
 		@apache_combined = [
@@ -330,6 +330,7 @@ describe 'UniversalAccessLogParser' do
 		it 'Apache common' do
 			parser = UniversalAccessLogParser.apache_common
 			data = parser.parse(@apache_common[0])
+
 			data.remote_host.should == IP.new('127.0.0.1')
 			data.logname.should == nil
 			data.user.should == nil
@@ -344,19 +345,32 @@ describe 'UniversalAccessLogParser' do
 		it 'Apache common bad protocol' do
 			parser = UniversalAccessLogParser.apache_common
 			data = parser.parse(@apache_common[1])
-			p @apache_common[1]
-			p parser
 
 			data.remote_host.should == IP.new('127.0.0.1')
 			data.logname.should == nil
 			data.user.should == nil
-			p data.time
 			data.time.to_i.should == Time.parse('Sat Oct 01 13:29:11 +0200 2011').to_i
 			data.method.should == 'GET'
 			data.uri.should == '/'
 			data.protocol.should == nil
 			data.status.should == 400
 			data.response_size.should == 324
+		end
+
+		it 'Apache vhost common' do
+			parser = UniversalAccessLogParser.apache_vhost_common
+			data = parser.parse(@apache_vhost_common[0])
+
+			data.vhost.should == 'sigquit.net'
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.logname.should == nil
+			data.user.should == nil
+			data.time.to_i.should == Time.parse('Thu Sep 21 23:06:41 +0100 2005').to_i
+			data.method.should == 'GET'
+			data.uri.should == '/'
+			data.protocol.should == 'HTTP/1.1'
+			data.status.should == 404
+			data.response_size.should == nil
 		end
 	end
 end
