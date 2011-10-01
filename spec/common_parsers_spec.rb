@@ -20,11 +20,11 @@ describe UniversalAccessLogParser do
 			'87.18.183.252 - - [13/Aug/2008:00:50:49 -0700] "GET /blog/index.xml HTTP/1.1" 302 527 "-" "Feedreader 3.13 (Powered by Newsbrain)"',
 			'80.154.42.54 - - [23/Aug/2010:15:25:35 +0000] "GET /phpmy-admin/scripts/setup.php HTTP/1.1" 404 347 "-" "-"',
 			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 - "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+"',
-			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test "test" test"'
+			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test test test"'
 		]
 
 		@apache_combined_extra = [
-			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test "test" test" pass URL-List URL-List 0 - 0'
+			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test test test" pass URL-List URL-List 0 - 0'
 		]
 
 		# "%{Referer}i -> %U"
@@ -157,7 +157,7 @@ describe UniversalAccessLogParser do
 			data.status.should == 200
 			data.response_size.should == 60662
 			data.referer.should == nil
-			data.user_agent.should == 'test "test" test'
+			data.user_agent.should == 'test test test'
 		end
 
 		it 'Apache combined with extra data' do
@@ -181,7 +181,7 @@ describe UniversalAccessLogParser do
 			data.status.should == 200
 			data.response_size.should == 60662
 			data.referer.should == nil
-			data.user_agent.should == 'test "test" test'
+			data.user_agent.should == 'test test test'
 
 			data.varnish.should == 'pass'
 			data.varnish_status.should == 'URL-List'

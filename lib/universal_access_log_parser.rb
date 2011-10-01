@@ -34,6 +34,7 @@ class UniversalAccessLogParser
 		def initialize(separator, surrounded_by = [], &block)
 			@separator = separator
 			@surrounded_by = surrounded_by.map{|e| Regexp.escape(e)}
+			@other = nil
 			instance_eval &block
 		end
 
@@ -42,27 +43,31 @@ class UniversalAccessLogParser
 			ss = (@surrounded_by[0] or '')
 			se = (@surrounded_by[1] or '')
 
-			ss + map{|e| e.regexp}.join(@separator) + se
+			ss + map{|e| e.regexp}.join(@separator) + se + (@other ? @other : '')
 		end
 		
 		def names
-			map do |e|
+			names = map do |e|
 				if e.class == ElementGroup
 					e.names
 				else
 					e.name
 				end
 			end.flatten
+			names << :other if @other
+			names
 		end
 
 		def parsers
-			map do |e|
+			p = map do |e|
 				if e.class == ElementGroup
 					e.parsers
 				else
-					e
+					e.parser
 				end
 			end.flatten
+			p << lambda{|s| s.sub(Regexp.new("^#{@separator}"), '')} if @other
+			p
 		end
 
 		# DSL
@@ -96,7 +101,7 @@ class UniversalAccessLogParser
 		end
 
 		def date(name, format = '%d/%b/%Y:%H:%M:%S %z', options = {})
-			regex = Regexp.escape(format).gsub(/%./, '.+').gsub(/\//, '\\/')
+			regex = Regexp.escape(format).gsub(/%./, '.+').gsub(/\//, '\\/') + '?'
 			element(name, regex, options) do |match|
 				DateTime.strptime(match, format).new_offset(0).instance_eval do
 					Time.utc(year, mon, mday, hour, min, sec + sec_fraction)
@@ -118,13 +123,19 @@ class UniversalAccessLogParser
 		end
 
 		def string(name, options = {})
-			element(name, ".*", options) do |s|
+			greedy = true
+			greedy = options[:greedy] if options.member? :greedy
+			element(name, ".*#{greedy ? '?' : ''}", options) do |s|
 				if block_given?
 					yield s 
 				else
 					s
 				end
 			end
+		end
+
+		def other
+			@other = "($|#{@separator}.*)"
 		end
 
 		def self.parser(name, &block)
@@ -137,9 +148,10 @@ class UniversalAccessLogParser
 		@@parser_id += 1
 
 		@elements = ElementGroup.new(' ', &block)
+		@elements.other # by default expect more elements
 
 		@parsed_log_entry_class = Struct.new("ParsedLogEntry#{@@parser_id}", *@elements.names)
-		@regexp = Regexp.new(@elements.regexp)
+		@regexp = Regexp.new('^' + @elements.regexp + '$')
 	end
 
 	def self.parser(name, &block)
@@ -157,8 +169,8 @@ class UniversalAccessLogParser
 
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
-		data = @elements.parsers.zip(strings).map do |element, string|
-			element.parser.call(string)
+		data = @elements.parsers.zip(strings).map do |parser, string|
+			parser.call(string)
 		end
 
 		@parsed_log_entry_class.new(*data)

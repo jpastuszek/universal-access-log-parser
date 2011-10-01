@@ -305,5 +305,19 @@ describe 'UniversalAccessLogParser' do
 			parser.parse('123.123.123.213 dasf')
 		}.should raise_error UniversalAccessLogParser::ParsingError
 	end
+
+	it 'should parse log lines with more elements than defined that then can be accessed via #other' do
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+		end
+
+		data = parser.parse('123.123.123.213 kazuya test a b cdef')
+		data.remote_host.should == IP.new('123.123.123.213')
+		data.logname.should == 'kazuya'
+		data.user.should == 'test'
+		data.other.should == 'a b cdef'
+	end
 end
 

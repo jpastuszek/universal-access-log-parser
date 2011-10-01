@@ -37,7 +37,7 @@ UniversalAccessLogParser.parser(:apache_referer) do
 end
 
 UniversalAccessLogParser.parser(:apache_user_agent) do
-	string :user_agent, :nil_on => '-'
+	string :user_agent, :nil_on => '-', :greedy => false
 end
 
 UniversalAccessLogParser.parser(:icecast) do
