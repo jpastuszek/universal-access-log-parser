@@ -475,6 +475,14 @@ describe 'UniversalAccessLogParser' do
 			data.cache_ttl.should == nil
 			data.cache_age.should == 0
 		end
+
+		it 'Apache referer' do
+			parser = UniversalAccessLogParser.apache_referer
+			data = parser.parse(@apache_referer[0])
+
+			data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+			data.url.should == '/wordpress3/wp-admin/admin-ajax.php'
+		end
 	end
 end
 

@@ -150,6 +150,13 @@ class UniversalAccessLogParser
 				string :user_agent, :nil_on => '-'
 			end
 		end
+
+		def apache_referer
+			separated_with ' -> ' do
+				string :referer, :nil_on => '-'
+				string :url
+			end
+		end
 	end
 
 	def initialize(&block)
@@ -172,6 +179,10 @@ class UniversalAccessLogParser
 
 	def self.apache_combined
 		self.new{ apache_combined }
+	end
+
+	def self.apache_referer
+		self.new{ apache_referer }
 	end
 
 	def parse(line)
