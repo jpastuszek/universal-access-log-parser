@@ -89,7 +89,13 @@ class UniversalAccessLogParser
 
 		def element(name, regexp, options = {}, &parser)
 			nil_on = options[:nil_on]
-			push Element.new(name, regexp, nil_on, &parser)
+			process = options[:process]
+			if process
+				p = lambda{|s| process.call(parser.call(s))}
+			else
+				p = parser 
+			end
+			push Element.new(name, regexp, nil_on, &p)
 		end
 
 		def single_quoted(&block)
@@ -118,8 +124,9 @@ class UniversalAccessLogParser
 		end
 
 		def ip(name, options = {})
-			#element(name, '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'){|s| IP.new(s)}
-			string(name, options){|s| IP.new(s)}
+			greedy = true
+			greedy = options[:greedy] if options.member? :greedy
+			element(name, ".*#{greedy ? '?' : ''}", options){|s| IP.new(s)}
 		end
 
 		def integer(name, options = {})
@@ -133,13 +140,7 @@ class UniversalAccessLogParser
 		def string(name, options = {})
 			greedy = true
 			greedy = options[:greedy] if options.member? :greedy
-			element(name, ".*#{greedy ? '?' : ''}", options) do |s|
-				if block_given?
-					yield s 
-				else
-					s
-				end
-			end
+			element(name, ".*#{greedy ? '?' : ''}", options){|s| s}
 		end
 
 		def other

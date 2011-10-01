@@ -54,7 +54,7 @@ UniversalAccessLogParser.parser(:iis) do
 	integer :port
 	string :username, :nil_on => '-'
 	ip :client_ip
-	string(:user_agent, :nil_on => '-'){|s| s.tr('+', ' ')}
+	string :user_agent, :nil_on => '-', :process => lambda{|s| s.tr('+', ' ')}
 	integer :status
 	integer :substatus
 	integer :win32_status
