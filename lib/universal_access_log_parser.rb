@@ -38,6 +38,11 @@ class UniversalAccessLogParser
 			instance_eval &block
 		end
 
+		# custom parser definition
+		def self.parser(name, &block)
+			define_method(name, &block)
+		end
+
 		# getters
 		def regexp
 			ss = (@surrounded_by[0] or '')
@@ -140,10 +145,6 @@ class UniversalAccessLogParser
 		def other
 			@other = "($|#{@separator}.*)"
 		end
-
-		def self.parser(name, &block)
-			define_method(name, &block)
-		end
 	end
 
 	def initialize(&block)
@@ -191,6 +192,7 @@ class UniversalAccessLogParser
 		@parsed_log_entry_class.make_metods(@names)
 	end
 
+	# custom parser definition
 	def self.parser(name, &block)
 		ElementGroup.parser(name, &block)
 
