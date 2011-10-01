@@ -146,6 +146,44 @@ class UniversalAccessLogParser
 		end
 	end
 
+	class Entry < Struct.new(:name, :parser)
+	end
+
+	class ElementParserSet
+		def initialize(names, parsers)
+			@names = []
+			@parsers = {}
+
+			names.zip(parsers).each do |name, parser|
+				@names << name
+				@parsers[name] = parser
+			end
+		end
+
+		attr_reader :names, :parsers
+	end
+
+	class ParsedLogEntry
+		def initialize(element_parser_set, strings)
+			@strings = {}
+			@element_parser_set = element_parser_set
+
+			@element_parser_set.names.zip(strings).each do |name, string|
+				@strings[name] = string
+			end
+
+			@element_parser_set.names.each do |name|
+				m = """
+					def #{name}
+						@element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
+					end
+				"""
+				#puts m
+				eval m
+			end
+		end
+	end
+
 	def initialize(&block)
 		@@parser_id ||= 0
 		@@parser_id += 1
@@ -153,8 +191,9 @@ class UniversalAccessLogParser
 		@elements = ElementGroup.new(' ', &block)
 		@elements.other # by default expect more elements
 
-		@parsed_log_entry_class = Struct.new("ParsedLogEntry#{@@parser_id}", *@elements.names)
 		@regexp = Regexp.new('^' + @elements.regexp + '$')
+
+		@element_parser_set = ElementParserSet.new(@elements.names, @elements.parsers)
 	end
 
 	def self.parser(name, &block)
@@ -172,11 +211,7 @@ class UniversalAccessLogParser
 
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
-		data = @elements.parsers.zip(strings).map do |parser, string|
-			parser.call(string)
-		end
-
-		@parsed_log_entry_class.new(*data)
+		ParsedLogEntry.new(@element_parser_set, strings)
 	end
 
 	def inspect
