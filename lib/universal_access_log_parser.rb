@@ -163,27 +163,6 @@ class UniversalAccessLogParser
 		attr_reader :names, :parsers
 	end
 
-	class ParsedLogEntry
-		def initialize(element_parser_set, strings)
-			@strings = {}
-			@element_parser_set = element_parser_set
-
-			@element_parser_set.names.zip(strings).each do |name, string|
-				@strings[name] = string
-			end
-
-			@element_parser_set.names.each do |name|
-				m = """
-					def #{name}
-						@element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
-					end
-				"""
-				#puts m
-				eval m
-			end
-		end
-	end
-
 	def initialize(&block)
 		@@parser_id ||= 0
 		@@parser_id += 1
@@ -194,6 +173,31 @@ class UniversalAccessLogParser
 		@regexp = Regexp.new('^' + @elements.regexp + '$')
 
 		@element_parser_set = ElementParserSet.new(@elements.names, @elements.parsers)
+
+		@parsed_log_entry_class = Class.new do
+			def self.make_metods(element_parser_set)
+				element_parser_set.names.each do |name|
+					m = """
+						def #{name}
+							@element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
+						end
+					"""
+					#puts m
+					class_eval m
+				end
+			end
+
+			def initialize(element_parser_set, strings)
+				@strings = {}
+				@element_parser_set = element_parser_set
+
+				@element_parser_set.names.zip(strings).each do |name, string|
+					@strings[name] = string
+				end
+			end
+		end
+		@parsed_log_entry_class.make_metods(@element_parser_set)
+
 	end
 
 	def self.parser(name, &block)
@@ -211,7 +215,7 @@ class UniversalAccessLogParser
 
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
-		ParsedLogEntry.new(@element_parser_set, strings)
+		@parsed_log_entry_class.new(@element_parser_set, strings)
 	end
 
 	def inspect
