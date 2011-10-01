@@ -509,6 +509,25 @@ describe 'UniversalAccessLogParser' do
 			data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; InfoPath.2)'
 			data.duration.should == 592
 		end
+
+		it 'IIS' do
+			parser = UniversalAccessLogParser.iis
+			data = parser.parse(@iis[0])
+
+			data.time.to_i.should == Time.parse('Mon Jun 20 00:00:00 UTC 2011').to_i
+			data.server_ip.should == IP.new('83.222.242.43')
+			data.method.should == 'GET'
+			data.url.should == '/SharedControls/getListingThumbs.aspx'
+			data.query.should == 'img=48,13045,27801,25692,35,21568,21477,21477,10,18,46,8&premium=0|1|0|0|0|0|0|0|0|0|0|0&h=100&w=125&pos=175&scale=true'
+			data.port.should == 80
+			data.username.should == nil
+			data.client_ip.should == IP.new('92.20.10.104')
+			data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB6.6; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; aff-kingsoft-ciba; .NET4.0C; MASN; AskTbSTC/5.8.0.12304)'
+			data.status.should == 200
+			data.substatus.should == 0
+			data.win32_status.should == 0
+			data.duration.should == 609
+		end
 	end
 end
 

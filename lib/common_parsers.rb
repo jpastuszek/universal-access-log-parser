@@ -45,3 +45,19 @@ UniversalAccessLogParser.parser(:icecast) do
 	integer :duration, :nil_on => '-'
 end
 
+UniversalAccessLogParser.parser(:iis) do
+	date_iis :time
+	ip :server_ip
+	string :method
+	string :url
+	string :query, :nil_on => '-'
+	integer :port
+	string :username, :nil_on => '-'
+	ip :client_ip
+	string(:user_agent, :nil_on => '-'){|s| s.tr('+', ' ')}
+	integer :status
+	integer :substatus
+	integer :win32_status
+	integer :duration
+end
+

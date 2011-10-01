@@ -93,7 +93,7 @@ class UniversalAccessLogParser
 			element(name, regex, options) do |match|
 				DateTime.strptime(match, format).new_offset(0).instance_eval do
 					Time.utc(year, mon, mday, hour, min, sec + sec_fraction)
-				end.getlocal
+				end
 			end
 		end
 
