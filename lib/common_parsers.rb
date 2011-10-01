@@ -58,6 +58,6 @@ UniversalAccessLogParser.parser(:iis) do
 	integer :status
 	integer :substatus
 	integer :win32_status
-	integer :duration
+	integer :duration, :process => lambda{|i| i.to_f / 1000}
 end
 

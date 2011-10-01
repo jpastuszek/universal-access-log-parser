@@ -258,7 +258,7 @@ describe UniversalAccessLogParser do
 			data.status.should == 200
 			data.substatus.should == 0
 			data.win32_status.should == 0
-			data.duration.should == 609
+			data.duration.should == 0.609
 		end
 	end
 end
