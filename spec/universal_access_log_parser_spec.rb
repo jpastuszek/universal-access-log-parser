@@ -19,7 +19,12 @@ describe 'UniversalAccessLogParser' do
 			'123.65.150.10 - - [23/Aug/2010:03:50:59 +0000] "POST /wordpress3/wp-admin/admin-ajax.php HTTP/1.1" 200 2 "http://www.example.com/wordpress3/wp-admin/post-new.php" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.25 Safari/534.3"',
 			'87.18.183.252 - - [13/Aug/2008:00:50:49 -0700] "GET /blog/index.xml HTTP/1.1" 302 527 "-" "Feedreader 3.13 (Powered by Newsbrain)"',
 			'80.154.42.54 - - [23/Aug/2010:15:25:35 +0000] "GET /phpmy-admin/scripts/setup.php HTTP/1.1" 404 347 "-" "-"',
-			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 - "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+"'
+			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 - "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+"',
+			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test "test" test"'
+		]
+
+		@apache_combined_extra = [
+			'127.0.0.1 - - [01/Oct/2011:07:51:39 -0400] "GET http://www.test.com/ HTTP/1.1" 200 60662 "-" "test "test" test" pass URL-List URL-List 0 - 0'
 		]
 
 		# "%{Referer}i -> %U"
@@ -424,6 +429,51 @@ describe 'UniversalAccessLogParser' do
 			data.response_size.should == nil
 			data.referer.should == nil
 			data.user_agent.should == 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
+
+			parser = UniversalAccessLogParser.apache_combined
+			data = parser.parse(@apache_combined[5])
+
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.logname.should == nil
+			data.user.should == nil
+			data.method.should == 'GET'
+			data.uri.should == 'http://www.test.com/'
+			data.protocol.should == 'HTTP/1.1'
+			data.status.should == 200
+			data.response_size.should == 60662
+			data.referer.should == nil
+			data.user_agent.should == 'test "test" test'
+		end
+
+		it 'Apache combined with extra data' do
+			parser = UniversalAccessLogParser.new do
+				apache_combined
+				string :varnish
+				string :varnish_status, :nil_on => '-'
+				string :initial_varnish_status, :nil_on => '-'
+				integer :cache_hits
+				integer :cache_ttl, :nil_on => '-'
+				integer :cache_age
+			end
+			data = parser.parse(@apache_combined_extra[0])
+
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.logname.should == nil
+			data.user.should == nil
+			data.method.should == 'GET'
+			data.uri.should == 'http://www.test.com/'
+			data.protocol.should == 'HTTP/1.1'
+			data.status.should == 200
+			data.response_size.should == 60662
+			data.referer.should == nil
+			data.user_agent.should == 'test "test" test'
+
+			data.varnish.should == 'pass'
+			data.varnish_status.should == 'URL-List'
+			data.initial_varnish_status.should == 'URL-List'
+			data.cache_hits.should == 0
+			data.cache_ttl.should == nil
+			data.cache_age.should == 0
 		end
 	end
 end
