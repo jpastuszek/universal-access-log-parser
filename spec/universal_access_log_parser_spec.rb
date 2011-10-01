@@ -4,12 +4,38 @@ require 'time'
 
 describe 'UniversalAccessLogParser' do
 	before :all do
-		@apache_lines = [
-			'95.221.65.17 sigquit.net - [29/Sep/2011:17:38:06 +0100] "GET / HTTP/1.0" 200 1 "http://yandex.ru/yandsearch?text=sigquit.net" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)" "/var/www/localhost/./index.html"',
-			'87.18.183.252 - - [13/Aug/2008:00:50:49 -0700] "GET /blog/index.xml HTTP/1.1" 302 527 "-" "Feedreader 3.13 (Powered by Newsbrain)"'
+		# "%h %l %u %t \"%r\" %>s %b"
+		@apache_common = [
+			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -'
+		]
+		# "%v %h %l %u %t \"%r\" %>s %b"
+		@apache_vhost_common = [
+			'sigquit.net 172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -'
+		]
+		# "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+		@apache_combined = [
+			'95.221.65.17 kazuya - [29/Sep/2011:17:38:06 +0100] "GET / HTTP/1.0" 200 1 "http://yandex.ru/yandsearch?text=sigquit.net" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)"',
+			'123.65.150.10 - - [23/Aug/2010:03:50:59 +0000] "POST /wordpress3/wp-admin/admin-ajax.php HTTP/1.1" 200 2 "http://www.example.com/wordpress3/wp-admin/post-new.php" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.25 Safari/534.3"',
+			'87.18.183.252 - - [13/Aug/2008:00:50:49 -0700] "GET /blog/index.xml HTTP/1.1" 302 527 "-" "Feedreader 3.13 (Powered by Newsbrain)"',
+			'80.154.42.54 - - [23/Aug/2010:15:25:35 +0000] "GET /phpmy-admin/scripts/setup.php HTTP/1.1" 404 347 "-" "ZmEu"',
+			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 - "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+"'
 		]
 
-		@iis_line = '2011-06-20 00:00:00 83.222.242.43 GET /SharedControls/getListingThumbs.aspx img=48,13045,27801,25692,35,21568,21477,21477,10,18,46,8&premium=0|1|0|0|0|0|0|0|0|0|0|0&h=100&w=125&pos=175&scale=true 80 - 92.20.10.104 Mozilla/4.0+(compatible;+MSIE+8.0;+Windows+NT+6.1;+Trident/4.0;+GTB6.6;+SLCC2;+.NET+CLR+2.0.50727;+.NET+CLR+3.5.30729;+.NET+CLR+3.0.30729;+Media+Center+PC+6.0;+aff-kingsoft-ciba;+.NET4.0C;+MASN;+AskTbSTC/5.8.0.12304) 200 0 0 609'
+		# "%{Referer}i -> %U"
+		@apache_referer = [
+			'http://yandex.ru/yandsearch?text=sigquit.net -> /wordpress3/wp-admin/admin-ajax.php'
+		]
+
+		# "%{User-agent}i"
+		@apache_browser = [
+			'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
+		]
+
+		@icecast = '186.16.79.248 – - [02/Apr/2009:14:22:09 -0500] “GET /musicas HTTP/1.1″ 200 2497349 “http://www.rol.com.py/wimpy2/rave.swf?cachebust=1238699531218″ “Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; InfoPath.2)” 592'
+
+		@iis = [
+			'2011-06-20 00:00:00 83.222.242.43 GET /SharedControls/getListingThumbs.aspx img=48,13045,27801,25692,35,21568,21477,21477,10,18,46,8&premium=0|1|0|0|0|0|0|0|0|0|0|0&h=100&w=125&pos=175&scale=true 80 - 92.20.10.104 Mozilla/4.0+(compatible;+MSIE+8.0;+Windows+NT+6.1;+Trident/4.0;+GTB6.6;+SLCC2;+.NET+CLR+2.0.50727;+.NET+CLR+3.5.30729;+.NET+CLR+3.0.30729;+Media+Center+PC+6.0;+aff-kingsoft-ciba;+.NET4.0C;+MASN;+AskTbSTC/5.8.0.12304) 200 0 0 609'
+		]
 	end
 
 	describe UniversalAccessLogParser::ElementGroup do
@@ -39,7 +65,7 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				e.regexp.should == 'test1 test2 test3,test4 test5 test6'
+				e.regexp.should == '(test1) (test2) (test3),(test4) (test5) (test6)'
 			end
 
 			it '#parser should return array of all element parsers' do
@@ -263,40 +289,61 @@ describe 'UniversalAccessLogParser' do
 	end
 
 	it 'can parse NCSA logs' do
-				parser = UniversalAccessLogParser.new do
-					ip :client_ip
-					string :host_name
-					string :login
-					surrounded_by '[', ']' do
-						date_ncsa :date
-					end
-					double_quoted do
-						string :method
-						string :uri
-						string :protocol
-					end
-					integer :status
-					integer :bytes
-					double_quoted do
-						string :referer
-					end
-					double_quoted do
-						string :user_agent
-					end
-					double_quoted do
-						string :file
-					end
-				end
-				p parser
-				data = parser.parse(@apache_lines[0])
-				p data
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+			surrounded_by '[', ']' do
+				date_ncsa :time
+			end
+			double_quoted do
+				string :method
+				string :uri
+				string :protocol
+			end
+			integer :status
+			integer :response_size, :nil_on => '-'
+			double_quoted do
+				string :referer, :nil_on => '-'
+			end
+			double_quoted do
+				string :user_agent, :nil_on => '-'
+			end
+		end
+		p parser
+		data = parser.parse(@apache_combined[0])
+		p data
 
-				data.client_ip.should == IP.new('95.221.65.17')
-				data.host_name.should == 'sigquit.net'
-				data.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
-				data.status.should == 200
-				data.uri.should == '/'
-				data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+		data.remote_host.should == IP.new('95.221.65.17')
+		data.logname.should == 'kazuya'
+		data.user.should == nil
+		data.time.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+		data.method.should == 'GET'
+		data.uri.should == '/'
+		data.protocol.should == 'HTTP/1.0'
+		data.status.should == 200
+		data.response_size.should == 1
+		data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
+		data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)'
+	end
+
+	describe 'default parsers' do
+		it 'Apache common' do
+			parser = UniversalAccessLogParser.apache_common
+			data = parser.parse(@apache_common[0])
+			p parser
+			p @apache_common[0]
+			data.remote_host.should == IP.new('172.0.0.1')
+			data.logname.should == nil
+			data.user.should == nil
+			p data.time
+			data.time.to_i.should == Time.parse('+Thu Sep 21 23:06:41 +0100 2005').to_i
+			data.method.should == 'GET'
+			data.uri.should == '/'
+			data.protocol.should == 'HTTP/1.1'
+			data.status.should == 404
+			data.response_size.should == nil
+		end
 	end
 end
 
