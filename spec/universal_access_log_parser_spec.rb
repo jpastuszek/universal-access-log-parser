@@ -289,5 +289,21 @@ describe 'UniversalAccessLogParser' do
 		data.referer.should == 'http://yandex.ru/yandsearch?text=sigquit.net'
 		data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)'
 	end
+
+	it 'should raise UniversalAccessLogParser::ParsingError on parsing failure' do
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+		end
+
+		lambda {
+			parser.parse('123.123.123.213 - -')
+		}.should_not raise_error
+
+		lambda {
+			parser.parse('123.123.123.213 dasf')
+		}.should raise_error UniversalAccessLogParser::ParsingError
+	end
 end
 

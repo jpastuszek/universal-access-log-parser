@@ -1,7 +1,14 @@
 require 'ip'
 
 class UniversalAccessLogParser
-	class ParserBase
+	class ParsingError < RuntimeError
+		def initialize(msg, parser, log_line)
+			@parser = parser
+			@log_line = log_line
+			super(msg)
+		end
+
+		attr_reader :parser, :log_line
 	end
 
 	class ElementGroup < Array
@@ -148,7 +155,7 @@ class UniversalAccessLogParser
 	def parse(line)
 		matched, *strings = @regexp.match(line).to_a
 
-		return nil if strings.empty?
+		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
 		data = @elements.parsers.zip(strings).map do |element, string|
 			element.parser.call(string)
