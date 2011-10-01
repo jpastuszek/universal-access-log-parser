@@ -6,7 +6,8 @@ describe 'UniversalAccessLogParser' do
 	before :all do
 		# "%h %l %u %t \"%r\" %>s %b"
 		@apache_common = [
-			'172.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -'
+			'127.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -',
+			'127.0.0.1 - - [01/Oct/2011:07:29:11 -0400] "GET / " 400 324'
 		]
 		# "%v %h %l %u %t \"%r\" %>s %b"
 		@apache_vhost_common = [
@@ -297,9 +298,9 @@ describe 'UniversalAccessLogParser' do
 				date_ncsa :time
 			end
 			double_quoted do
-				string :method
-				string :uri
-				string :protocol
+				string :method, :nil_on => ''
+				string :uri, :nil_on => ''
+				string :protocol, :nil_on => ''
 			end
 			integer :status
 			integer :response_size, :nil_on => '-'
@@ -310,9 +311,7 @@ describe 'UniversalAccessLogParser' do
 				string :user_agent, :nil_on => '-'
 			end
 		end
-		p parser
 		data = parser.parse(@apache_combined[0])
-		p data
 
 		data.remote_host.should == IP.new('95.221.65.17')
 		data.logname.should == 'kazuya'
@@ -331,18 +330,33 @@ describe 'UniversalAccessLogParser' do
 		it 'Apache common' do
 			parser = UniversalAccessLogParser.apache_common
 			data = parser.parse(@apache_common[0])
-			p parser
-			p @apache_common[0]
-			data.remote_host.should == IP.new('172.0.0.1')
+			data.remote_host.should == IP.new('127.0.0.1')
 			data.logname.should == nil
 			data.user.should == nil
-			p data.time
-			data.time.to_i.should == Time.parse('+Thu Sep 21 23:06:41 +0100 2005').to_i
+			data.time.to_i.should == Time.parse('Thu Sep 21 23:06:41 +0100 2005').to_i
 			data.method.should == 'GET'
 			data.uri.should == '/'
 			data.protocol.should == 'HTTP/1.1'
 			data.status.should == 404
 			data.response_size.should == nil
+		end
+
+		it 'Apache common bad protocol' do
+			parser = UniversalAccessLogParser.apache_common
+			data = parser.parse(@apache_common[1])
+			p @apache_common[1]
+			p parser
+
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.logname.should == nil
+			data.user.should == nil
+			p data.time
+			data.time.to_i.should == Time.parse('Sat Oct 01 13:29:11 +0200 2011').to_i
+			data.method.should == 'GET'
+			data.uri.should == '/'
+			data.protocol.should == nil
+			data.status.should == 400
+			data.response_size.should == 324
 		end
 	end
 end

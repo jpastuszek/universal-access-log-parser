@@ -128,9 +128,9 @@ class UniversalAccessLogParser
 				date_ncsa :time
 			end
 			double_quoted do
-				string :method
-				string :uri
-				string :protocol
+				string :method, :nil_on => ''
+				string :uri, :nil_on => ''
+				string :protocol, :nil_on => ''
 			end
 			integer :status
 			integer :response_size, :nil_on => '-'
@@ -144,9 +144,9 @@ class UniversalAccessLogParser
 				date_ncsa :time
 			end
 			double_quoted do
-				string :method
-				string :uri
-				string :protocol
+				string :method, :nil_on => ''
+				string :uri, :nil_on => ''
+				string :protocol, :nil_on => ''
 			end
 			integer :status
 			integer :response_size, :nil_on => '-'
