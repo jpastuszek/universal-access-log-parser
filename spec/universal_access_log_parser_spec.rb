@@ -37,7 +37,9 @@ describe 'UniversalAccessLogParser' do
 			'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
 		]
 
-		@icecast = '186.16.79.248 – - [02/Apr/2009:14:22:09 -0500] “GET /musicas HTTP/1.1″ 200 2497349 “http://www.rol.com.py/wimpy2/rave.swf?cachebust=1238699531218″ “Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; InfoPath.2)” 592'
+		@icecast = [
+			'186.16.79.248 - - [02/Apr/2009:14:22:09 -0500] "GET /musicas HTTP/1.1" 200 2497349 "http://www.rol.com.py/wimpy2/rave.swf?cachebust=1238699531218" "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; InfoPath.2)" 592'
+		]
 
 		@iis = [
 			'2011-06-20 00:00:00 83.222.242.43 GET /SharedControls/getListingThumbs.aspx img=48,13045,27801,25692,35,21568,21477,21477,10,18,46,8&premium=0|1|0|0|0|0|0|0|0|0|0|0&h=100&w=125&pos=175&scale=true 80 - 92.20.10.104 Mozilla/4.0+(compatible;+MSIE+8.0;+Windows+NT+6.1;+Trident/4.0;+GTB6.6;+SLCC2;+.NET+CLR+2.0.50727;+.NET+CLR+3.5.30729;+.NET+CLR+3.0.30729;+Media+Center+PC+6.0;+aff-kingsoft-ciba;+.NET4.0C;+MASN;+AskTbSTC/5.8.0.12304) 200 0 0 609'
@@ -489,6 +491,23 @@ describe 'UniversalAccessLogParser' do
 			data = parser.parse(@apache_user_agent[0])
 
 			data.user_agent.should == 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8b3) Gecko/20050712 Firefox/1.0+'
+		end
+
+		it 'Icecast' do
+			parser = UniversalAccessLogParser.icecast
+			data = parser.parse(@icecast[0])
+
+			data.remote_host.should == IP.new('186.16.79.248')
+			data.logname.should == nil
+			data.user.should == nil
+			data.method.should == 'GET'
+			data.uri.should == '/musicas'
+			data.protocol.should == 'HTTP/1.1'
+			data.status.should == 200
+			data.response_size.should == 2497349
+			data.referer.should == 'http://www.rol.com.py/wimpy2/rave.swf?cachebust=1238699531218'
+			data.user_agent.should == 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; InfoPath.2)'
+			data.duration.should == 592
 		end
 	end
 end

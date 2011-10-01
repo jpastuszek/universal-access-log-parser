@@ -40,3 +40,8 @@ UniversalAccessLogParser.parser(:apache_user_agent) do
 	string :user_agent, :nil_on => '-'
 end
 
+UniversalAccessLogParser.parser(:icecast) do
+	apache_combined
+	integer :duration, :nil_on => '-'
+end
+
