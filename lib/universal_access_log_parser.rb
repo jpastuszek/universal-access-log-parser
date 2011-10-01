@@ -179,7 +179,10 @@ class UniversalAccessLogParser
 				element_parser_set.names.each do |name|
 					m = """
 						def #{name}
-							@element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
+							return @cache[:#{name}] if @cache.member? :#{name}
+							value = @element_parser_set.parsers[:#{name}].call(@strings[:#{name}])
+							@cache[:#{name}] = value
+							value
 						end
 					"""
 					#puts m
@@ -194,10 +197,11 @@ class UniversalAccessLogParser
 				@element_parser_set.names.zip(strings).each do |name, string|
 					@strings[name] = string
 				end
+
+				@cache = {}
 			end
 		end
 		@parsed_log_entry_class.make_metods(@element_parser_set)
-
 	end
 
 	def self.parser(name, &block)
