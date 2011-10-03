@@ -1,6 +1,9 @@
 require 'ip'
 
 class UniversalAccessLogParser
+	class ParserError < ArgumentError
+	end
+
 	class ParsingError < ArgumentError
 		def initialize(msg, parser, line)
 			@parser = parser
@@ -40,9 +43,49 @@ class UniversalAccessLogParser
 			end
 		end
 
-		def initialize(separator, surrounded_by = [], group_name = nil, &block)
-			@separator = separator
-			@surrounded_by = surrounded_by
+		class Integrating < ElementGroup
+			def initialize(parent, separator, &block)
+				super(parent, &block)
+				@separator = separator
+			end
+
+			attr_reader :separator
+		end
+
+		class Root < Integrating
+			def initialize(separator, &block)
+				super(nil, separator, &block)
+			end
+
+			def regexp
+				super + "(|#{separator}.*)"
+			end
+		end
+
+		class Surrounding < ElementGroup
+			def initialize(parent, left, right, &block)
+				super(parent, &block)
+				@left = left
+				@right = right
+			end
+
+			def regexp
+				@left + super + @right
+			end
+		end
+
+		class Optional < ElementGroup
+			def initialize(parent, name, &block)
+				super(parent, name, &block)
+			end
+
+			def regexp
+				'(|' + super + ')'
+			end
+		end
+
+		def initialize(parent, group_name = nil, &block)
+			@parent = parent
 			@group_name = group_name
 			@skip_lines = []
 			@other = nil
@@ -57,11 +100,20 @@ class UniversalAccessLogParser
 		# getters
 		attr_reader :skip_lines
 
-		def regexp
-			ss = (@surrounded_by[0] or '')
-			se = (@surrounded_by[1] or '')
+		#def regexp
+			#ss = (@surrounded_by[0] or '')
+			#se = (@surrounded_by[1] or '')
 
-			ss + map{|e| e.regexp}.join(@separator) + se + (@other ? @other : '')
+			#ss + map{|e| e.regexp}.join(@separator) + se + (@other ? @other : '')
+		#end
+		
+		def separator
+			raise ParsingError, 'Integrating ElementGroup not defined in ElementGroup hierarhy' unless @parent
+			@parent.separator
+		end
+
+		def regexp
+			map{|e| e.regexp}.join(separator)
 		end
 		
 		def names
@@ -69,7 +121,7 @@ class UniversalAccessLogParser
 			n = []
 			n << @group_name if @group_name
 			n += map do |e|
-				if e.class == ElementGroup
+				if e.kind_of? ElementGroup
 					e.names
 				else
 					e.name
@@ -83,7 +135,7 @@ class UniversalAccessLogParser
 			p = []
 			p << lambda{|s| s.empty? ? nil : s} if @group_name
 			p += map do |e|
-				if e.class == ElementGroup
+				if e.kind_of? ElementGroup
 					e.parsers
 				else
 					e.parser
@@ -96,21 +148,17 @@ class UniversalAccessLogParser
 			p
 		end
 
-		# DSL
-		def separated_with(separator, &block)
-			push ElementGroup.new(separator, [], &block)
+		# core DSL
+		def integratin_group(separator, &block)
+			push ElementGroup::Integrating.new(self, separator, &block)
 		end
 
-		def surrounded_by(sstart, send, &block)
-			push ElementGroup.new(@separator, [sstart, send], &block)
+		def surrounding_group(left, right, &block)
+			push ElementGroup::Surrounding.new(self, left, right, &block)
 		end
 
 		def optional(name, &block)
-			push ElementGroup.new(@separator, ['(|', ')'], name, &block)
-		end
-
-		def skip_line(regexp)
-			@skip_lines << regexp
+			push ElementGroup::Optional.new(self, name, &block)
 		end
 
 		def element(name, regexp, options = {}, &parser)
@@ -122,6 +170,19 @@ class UniversalAccessLogParser
 				p = parser 
 			end
 			push Element.new(name, regexp, nil_on, &p)
+		end
+
+		# DSL
+		def separated_with(separator, &block)
+			integratin_group(separator, &block)
+		end
+
+		def surrounded_by(left, right, &block)
+			surrounding_group(left, right, &block)
+		end
+
+		def skip_line(regexp)
+			@skip_lines << regexp
 		end
 
 		def single_quoted(&block)
@@ -229,7 +290,7 @@ class UniversalAccessLogParser
 		@@parser_id ||= 0
 		@@parser_id += 1
 
-		@elements = ElementGroup.new(' ', &block)
+		@elements = ElementGroup::Root.new(' ', &block)
 		@elements.other # by default expect more elements
 
 		@skip_lines = @elements.skip_lines.map{|s| Regexp.new(s)}

@@ -6,7 +6,7 @@ describe 'UniversalAccessLogParser' do
 	describe UniversalAccessLogParser::ElementGroup do
 		describe 'with nesting' do
 			it '#names should return array of all defined element names' do
-				e = UniversalAccessLogParser::ElementGroup.new(' ') do
+				e = UniversalAccessLogParser::ElementGroup::Root.new(' ') do
 					element :test1, 'test1'
 					element :test2, 'test2'
 					separated_with ',' do
@@ -20,7 +20,7 @@ describe 'UniversalAccessLogParser' do
 			end
 
 			it '#regexp should return element regexp joined by separator' do
-				e = UniversalAccessLogParser::ElementGroup.new(' ') do
+				e = UniversalAccessLogParser::ElementGroup::Root.new(' ') do
 					element :test1, 'test1'
 					element :test2, 'test2'
 					separated_with ',' do
@@ -30,11 +30,11 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				e.regexp.should == '(test1) (test2) (test3),(test4) (test5) (test6)'
+				e.regexp.should == '(test1) (test2) (test3),(test4) (test5) (test6)(| .*)'
 			end
 
 			it '#parser should return array of all element parsers' do
-				e = UniversalAccessLogParser::ElementGroup.new(' ') do
+				e = UniversalAccessLogParser::ElementGroup::Root.new(' ') do
 					element :test1, 'test1'
 					element :test2, 'test2'
 					separated_with ',' do
