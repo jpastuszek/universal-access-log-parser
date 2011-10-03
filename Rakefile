@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "universal-access-log-parser"
   gem.homepage = "http://github.com/jpastuszek/universal-access-log-parser"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = 'Define your own access log parser of reuse/extend predefined common parsers'
+  gem.description = 'Meta parser that allows you to define new parser with ruby DSL to match access log file format you are willing to parse or use one of the predefined parsers like Apache common, IIS and more'
   gem.email = "jpastuszek@gmail.com"
   gem.authors = ["Jakub Pastuszek"]
   # dependencies defined in Gemfile
