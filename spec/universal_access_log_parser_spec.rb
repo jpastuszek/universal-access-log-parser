@@ -471,6 +471,54 @@ describe 'UniversalAccessLogParser' do
 			entries[2].remote_host.should == IP.new('123.123.123.2')
 		end
 
+		it '#parse! should parse and cache all element values' do
+			entries = []
+			lambda {
+				@iter.each do |entry|
+					entries << entry
+				end
+			}.should_not raise_error
+
+			entries.should have(3).entries
+
+			lambda {
+				entries[0].parse!
+			}.should_not raise_error
+
+			lambda {
+				entries[1].parse!
+			}.should raise_error UniversalAccessLogParser::ElementParsingError
+
+			lambda {
+				entries[2].parse!
+			}.should_not raise_error
+		end
+
+		it '#to_hash should return fully parsed hash' do
+			entries = []
+			lambda {
+				@iter.each do |entry|
+					entries << entry
+				end
+			}.should_not raise_error
+
+			entries.should have(3).entries
+
+			h = entries[0].to_hash
+			h[:remote_host].should == IP.new('123.123.123.0')
+			h[:logname].should == 'hello'
+			h[:user].should == 'world'
+
+			lambda {
+				entries[1].to_hash
+			}.should raise_error UniversalAccessLogParser::ElementParsingError
+
+			h = entries[2].to_hash
+			h[:remote_host].should == IP.new('123.123.123.2')
+			h[:logname].should == 'hello'
+			h[:user].should == nil
+		end
+
 		after :each do
 			@iter.close
 		end

@@ -236,6 +236,17 @@ class UniversalAccessLogParser
 
 				@cache = {}
 			end
+
+			def parse!
+				@strings.keys.each do |name|
+					send(name)
+				end
+			end
+
+			def to_hash
+				parse!
+				@cache
+			end
 		end
 
 		@parsed_log_entry_class.make_metods(@names)
