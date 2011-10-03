@@ -50,6 +50,8 @@ describe UniversalAccessLogParser do
 		it 'Apache common' do
 			parser = UniversalAccessLogParser.apache_common
 			data = parser.parse(@apache_common[0])
+			p parser
+			puts data
 
 			data.remote_host.should == IP.new('127.0.0.1')
 			data.logname.should == nil
@@ -159,6 +161,24 @@ describe UniversalAccessLogParser do
 			data.response_size.should == 60662
 			data.referer.should == nil
 			data.user_agent.should == 'test test test'
+		end
+
+		it 'Apache combined file' do
+			parser = UniversalAccessLogParser.apache_combined
+			entries = []
+			begin
+			parser.parse_file(File.dirname(__FILE__) + '/data/apache_access.log') do |iter|
+				iter.each_parsed! do |entry|
+					entries << entry
+				end
+			end
+			rescue => e
+				p parser
+				puts e.line
+			end
+			
+			entries.should have(178).entries
+			entries[3].uri.should == '/robots.txt'
 		end
 
 		it 'Apache combined with other data' do

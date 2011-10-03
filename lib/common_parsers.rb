@@ -2,13 +2,15 @@ UniversalAccessLogParser.parser(:apache_common) do
 	ip :remote_host
 	string :logname, :nil_on => '-'
 	string :user, :nil_on => '-'
-	surrounded_by '[', ']' do
+	surrounded_by '\[', '\]' do
 		date_ncsa :time
 	end
 	double_quoted do
-		string :method, :nil_on => ''
-		string :uri, :nil_on => ''
-		string :protocol, :nil_on => ''
+		optional :first_request_line do
+			string :method, :nil_on => ''
+			string :uri, :nil_on => ''
+			string :protocol, :nil_on => ''
+		end
 	end
 	integer :status
 	integer :response_size, :nil_on => '-'

@@ -2,13 +2,13 @@ require 'ip'
 
 class UniversalAccessLogParser
 	class ParsingError < ArgumentError
-		def initialize(msg, parser, log_line)
+		def initialize(msg, parser, line)
 			@parser = parser
-			@log_line = log_line
+			@line = line
 			super(msg)
 		end
 
-		attr_reader :parser, :log_line
+		attr_reader :parser, :line
 	end
 
 	class ElementParsingError < ArgumentError
@@ -22,13 +22,13 @@ class UniversalAccessLogParser
 
 	class ElementGroup < Array
 		class Element
-			def initialize(name, regexp, nil_on = nil, &parser)
+			def initialize(name, regexp, nil_on = nil)
 				@name = name
 				@regexp = regexp
 				@nil_on = nil_on
 				@parser = lambda{|s|
 					return nil if @nil_on and s == @nil_on
-					parser.call(s)
+					yield s if block_given?
 				}
 			end
 
@@ -40,9 +40,10 @@ class UniversalAccessLogParser
 			end
 		end
 
-		def initialize(separator, surrounded_by = [], &block)
+		def initialize(separator, surrounded_by = [], group_name = nil, &block)
 			@separator = separator
-			@surrounded_by = surrounded_by.map{|e| Regexp.escape(e)}
+			@surrounded_by = surrounded_by
+			@group_name = group_name
 			@skip_lines = []
 			@other = nil
 			instance_eval &block
@@ -64,7 +65,10 @@ class UniversalAccessLogParser
 		end
 		
 		def names
-			n = map do |e|
+			#TODO: refactor this mess!
+			n = []
+			n << @group_name if @group_name
+			n += map do |e|
 				if e.class == ElementGroup
 					e.names
 				else
@@ -76,7 +80,9 @@ class UniversalAccessLogParser
 		end
 
 		def parsers
-			p = map do |e|
+			p = []
+			p << lambda{|s| s.empty? ? nil : s} if @group_name
+			p += map do |e|
 				if e.class == ElementGroup
 					e.parsers
 				else
@@ -97,6 +103,10 @@ class UniversalAccessLogParser
 
 		def surrounded_by(sstart, send, &block)
 			push ElementGroup.new(@separator, [sstart, send], &block)
+		end
+
+		def optional(name, &block)
+			push ElementGroup.new(@separator, ['(|', ')'], name, &block)
 		end
 
 		def skip_line(regexp)

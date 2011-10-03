@@ -211,7 +211,7 @@ describe 'UniversalAccessLogParser' do
 		it 'by []' do
 			p = UniversalAccessLogParser.new do
 				string :test1
-				surrounded_by '[', ']' do
+				surrounded_by '\[', '\]' do
 					date :date, '%d.%b.%Y %H:%M:%S %z'
 				end
 				string :test2
@@ -258,7 +258,7 @@ describe 'UniversalAccessLogParser' do
 			ip :remote_host
 			string :logname, :nil_on => '-'
 			string :user, :nil_on => '-'
-			surrounded_by '[', ']' do
+			surrounded_by '\[', '\]' do
 				date_ncsa :time
 			end
 			double_quoted do
