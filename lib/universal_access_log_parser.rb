@@ -211,6 +211,10 @@ class UniversalAccessLogParser
 		end
 	end
 
+	# just so parsed log line class can be tested and named
+	class ParsedLogLine
+	end
+
 	def initialize(&block)
 		@@parser_id ||= 0
 		@@parser_id += 1
@@ -228,7 +232,11 @@ class UniversalAccessLogParser
 			@parsers[name] = parser
 		end
 
-		@parsed_log_entry_class = Class.new do
+		@parsed_log_entry_class = Class.new(ParsedLogLine) do
+			def self.name
+				superclass.name
+			end
+
 			def self.make_metods(names)
 				names.each do |name|
 					class_eval """
@@ -267,6 +275,18 @@ class UniversalAccessLogParser
 			def to_hash
 				parse!
 				@cache
+			end
+
+			def inspect
+				hash = @cache.dup
+				@strings.keys.each do |name|
+					hash[name] = '<unparsed>' unless hash.member? name
+				end
+				"#<#{self.class.name}: #{hash.keys.map{|s| s.to_s}.sort.map{|name| "#{name}: #{hash[name.to_sym].inspect}"}.join(', ')}>"
+			end
+
+			def to_s
+				"#<#{self.class.name}:#{object_id}>"
 			end
 		end
 

@@ -556,5 +556,29 @@ describe 'UniversalAccessLogParser' do
 			@iter.close
 		end
 	end
+
+	it 'should provide nice parsed element inspect output' do
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+		end
+
+		data = parser.parse('123.123.123.213 kazuya test')
+		data.remote_host
+		data.user
+		data.inspect.should == '#<UniversalAccessLogParser::ParsedLogLine: logname: "<unparsed>", other: "<unparsed>", remote_host: #<IP::V4 123.123.123.213>, user: "test">'
+	end
+
+	it 'should provide nice parsed element to_s output' do
+		parser = UniversalAccessLogParser.new do
+			ip :remote_host
+			string :logname, :nil_on => '-'
+			string :user, :nil_on => '-'
+		end
+
+		data = parser.parse('123.123.123.213 kazuya test')
+		data.to_s.should =~ /^#<UniversalAccessLogParser::ParsedLogLine/
+	end
 end
 
