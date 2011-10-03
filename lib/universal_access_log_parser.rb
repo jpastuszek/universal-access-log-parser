@@ -148,6 +148,23 @@ class UniversalAccessLogParser
 		end
 	end
 
+	class EntryIterator
+		def initialize(parser, io)
+			@parser = parser
+			@io = io
+		end
+
+		def each
+			@io.each_line do |line|
+				yield @parser.parse(line)
+			end
+		end
+
+		def close
+			@io.close
+		end
+	end
+
 	def initialize(&block)
 		@@parser_id ||= 0
 		@@parser_id += 1
@@ -210,6 +227,20 @@ class UniversalAccessLogParser
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
 		@parsed_log_entry_class.new(@names, @parsers, strings)
+	end
+
+	def parse_io(io)
+		EntryIterator.new(self, io)
+	end
+
+	def parse_file(file_path)
+		if block_given?
+			File.open(file_path) do |io|
+				yield parse_io(io)
+			end
+		else
+			parse_io(File.new(file_path))
+		end
 	end
 
 	def inspect

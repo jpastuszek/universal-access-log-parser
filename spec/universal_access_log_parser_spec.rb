@@ -333,5 +333,54 @@ describe 'UniversalAccessLogParser' do
 		data.user.should == 'test'
 		data.other.should == nil
 	end
+
+	describe 'parsing data sources' do
+		before :all do
+			@parser = UniversalAccessLogParser.new do
+				ip :remote_host
+				string :logname, :nil_on => '-'
+				string :user, :nil_on => '-'
+			end
+		end
+
+		it 'IO stream' do
+			File.open(File.dirname(__FILE__) + '/data/test1.log') do |io|
+				entries = []
+				@parser.parse_io(io).each do |entry|
+					entries << entry
+				end
+
+				entries[0].remote_host.should == IP.new('123.123.123.0')
+				entries[1].remote_host.should == IP.new('123.123.123.1')
+				entries[2].remote_host.should == IP.new('123.123.123.2')
+			end
+		end
+
+		it 'should parse file' do
+			entries = []
+			@parser.parse_file(File.dirname(__FILE__) + '/data/test1.log') do |iter|
+				iter.each do |entry|
+					entries << entry
+				end
+			end
+
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+			entries[1].remote_host.should == IP.new('123.123.123.1')
+			entries[2].remote_host.should == IP.new('123.123.123.2')
+		end
+
+		it 'should parse file without block' do
+			entries = []
+			iter = @parser.parse_file(File.dirname(__FILE__) + '/data/test1.log')
+			iter.each do |entry|
+				entries << entry
+			end
+			iter.close
+
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+			entries[1].remote_host.should == IP.new('123.123.123.1')
+			entries[2].remote_host.should == IP.new('123.123.123.2')
+		end
+	end
 end
 
