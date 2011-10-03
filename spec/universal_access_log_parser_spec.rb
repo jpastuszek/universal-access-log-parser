@@ -253,6 +253,72 @@ describe 'UniversalAccessLogParser' do
 		end
 	end
 
+	describe 'optional blocks' do
+		it 'should optionally match set of elements or "" allowing access via name' do
+			parser = UniversalAccessLogParser.new do
+				string :test1
+				optional :first_request_line do
+					string :method, :nil_on => ''
+					string :uri, :nil_on => ''
+					string :protocol, :nil_on => ''
+				end
+				string :test2
+			end
+
+			data = parser.parse('hello GET / HTTP/1.1 world')
+
+			data.first_request_line.should == 'GET / HTTP/1.1'
+			data.method.should == 'GET'
+			data.uri.should == '/'
+			data.protocol.should == 'HTTP/1.1'
+
+			data.test1.should == 'hello'
+			data.test2.should == 'world'
+
+			data = parser.parse('hello GET   world')
+
+			data.first_request_line.should == 'GET  '
+			data.method.should == 'GET'
+			data.uri.should == nil
+			data.protocol.should == nil
+
+			data.test1.should == 'hello'
+			data.test2.should == 'world'
+
+			data = parser.parse('hello  world')
+
+			data.first_request_line.should == ''
+			data.method.should == nil
+			data.uri.should == nil
+			data.protocol.should == nil
+
+			data.test1.should == 'hello'
+			data.test2.should == 'world'
+		end	
+
+		it 'should optionally match set of elements or nil allowing access via name if :nil_on option given' do
+			parser = UniversalAccessLogParser.new do
+				string :test1
+				optional :first_request_line, :nil_on => '' do
+					string :method, :nil_on => ''
+					string :uri, :nil_on => ''
+					string :protocol, :nil_on => ''
+				end
+				string :test2
+			end
+
+			data = parser.parse('hello  world')
+
+			data.first_request_line.should == nil
+			data.method.should == nil
+			data.uri.should == nil
+			data.protocol.should == nil
+
+			data.test1.should == 'hello'
+			data.test2.should == 'world'
+		end
+	end
+
 	it 'can parse log with format described in new block' do
 		parser = UniversalAccessLogParser.new do
 			ip :remote_host

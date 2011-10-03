@@ -7,7 +7,9 @@ describe UniversalAccessLogParser do
 		# "%h %l %u %t \"%r\" %>s %b"
 		@apache_common = [
 			'127.0.0.1 - - [21/Sep/2005:23:06:41 +0100] "GET / HTTP/1.1" 404 -',
-			'127.0.0.1 - - [01/Oct/2011:07:29:11 -0400] "GET / " 400 324'
+			'127.0.0.1 - - [01/Oct/2011:07:29:11 -0400] "GET / " 400 324',
+			'127.0.0.1 - - [01/Oct/2011:07:29:11 -0400] "GET /" 400 324',
+			'127.0.0.1 - - [01/Oct/2011:07:29:11 -0400] "" 400 324'
 		]
 		# "%v %h %l %u %t \"%r\" %>s %b"
 		@apache_vhost_common = [
@@ -50,14 +52,13 @@ describe UniversalAccessLogParser do
 		it 'Apache common' do
 			parser = UniversalAccessLogParser.apache_common
 			data = parser.parse(@apache_common[0])
-			p parser
-			puts data
 
 			data.remote_host.should == IP.new('127.0.0.1')
 			data.logname.should == nil
 			data.user.should == nil
 			data.time.to_i.should == Time.parse('Thu Sep 21 23:06:41 +0100 2005').to_i
 			data.method.should == 'GET'
+			data.first_request_line.should == 'GET / HTTP/1.1'
 			data.uri.should == '/'
 			data.protocol.should == 'HTTP/1.1'
 			data.status.should == 404
@@ -70,11 +71,32 @@ describe UniversalAccessLogParser do
 			data.logname.should == nil
 			data.user.should == nil
 			data.time.to_i.should == Time.parse('Sat Oct 01 13:29:11 +0200 2011').to_i
+			data.first_request_line.should == 'GET / '
 			data.method.should == 'GET'
 			data.uri.should == '/'
 			data.protocol.should == nil
 			data.status.should == 400
 			data.response_size.should == 324
+
+			parser = UniversalAccessLogParser.apache_common
+			data = parser.parse(@apache_common[2])
+
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.first_request_line.should == 'GET /'
+			data.method.should == nil
+			data.uri.should == nil
+			data.protocol.should == nil
+			data.status.should == 400
+
+			parser = UniversalAccessLogParser.apache_common
+			data = parser.parse(@apache_common[3])
+
+			data.remote_host.should == IP.new('127.0.0.1')
+			data.first_request_line.should == ''
+			data.method.should == nil
+			data.uri.should == nil
+			data.protocol.should == nil
+			data.status.should == 400
 		end
 
 		it 'Apache vhost common' do

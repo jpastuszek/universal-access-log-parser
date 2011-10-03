@@ -94,13 +94,14 @@ class UniversalAccessLogParser
 		end
 
 		class Optional < ElementGroup
-			def initialize(parent, name, &block)
+			def initialize(parent, name, options = {}, &block)
 				@group_name = name
+				@nil_on = options[:nil_on]
 				super(parent, &block)
 			end
 
 			def regexp
-				'(|' + super + ')'
+				'(' + super + '|.*?)'
 			end
 
 			def names
@@ -108,7 +109,11 @@ class UniversalAccessLogParser
 			end
 
 			def parsers
-				super.unshift lambda{ |s| s.empty? ? nil : s }
+				if @nil_on
+					super.unshift lambda{ |s| s == @nil_on ? nil : s }
+				else
+					super.unshift lambda{ |s| s}
+				end
 			end
 		end
 
@@ -160,8 +165,8 @@ class UniversalAccessLogParser
 			push ElementGroup::Surrounding.new(self, left, right, &block)
 		end
 
-		def optional(name, &block)
-			push ElementGroup::Optional.new(self, name, &block)
+		def optional(name, options = {}, &block)
+			push ElementGroup::Optional.new(self, name, options, &block)
 		end
 
 		def element(name, regexp, options = {}, &parser)
