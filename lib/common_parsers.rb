@@ -46,6 +46,7 @@ UniversalAccessLogParser.parser(:icecast) do
 end
 
 UniversalAccessLogParser.parser(:iis) do
+	skip_line '^#'
 	date_iis :time
 	ip :server_ip
 	string :method

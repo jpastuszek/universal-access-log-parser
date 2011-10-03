@@ -383,6 +383,27 @@ describe 'UniversalAccessLogParser' do
 			entries[1].remote_host.should == IP.new('123.123.123.1')
 			entries[2].remote_host.should == IP.new('123.123.123.2')
 		end
+
+		it 'should skip lines maching regexp' do
+			parser = UniversalAccessLogParser.new do
+				skip_line '^#'
+				ip :remote_host
+				string :logname, :nil_on => '-'
+				string :user, :nil_on => '-'
+			end
+
+			entries = []
+			iter = parser.parse_file(File.dirname(__FILE__) + '/data/test2.log')
+			iter.each do |entry|
+				entries << entry
+			end
+			iter.close
+
+			entries.should have(3).entries
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+			entries[1].remote_host.should == IP.new('123.123.123.1')
+			entries[2].remote_host.should == IP.new('123.123.123.2')
+		end
 	end
 
 	describe 'bad data handling' do

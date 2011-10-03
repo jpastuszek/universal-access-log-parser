@@ -260,6 +260,16 @@ describe UniversalAccessLogParser do
 			data.win32_status.should == 0
 			data.duration.should == 0.609
 		end
+
+		it 'IIS log file' do
+			entries = []
+			parser = UniversalAccessLogParser.iis
+			parser.parse_file(File.dirname(__FILE__) + '/data/iis_short.log') do |iter|
+				iter.each! do |entry|
+					entries << entry
+				end
+			end
+		end
 	end
 end
 

@@ -43,6 +43,7 @@ class UniversalAccessLogParser
 		def initialize(separator, surrounded_by = [], &block)
 			@separator = separator
 			@surrounded_by = surrounded_by.map{|e| Regexp.escape(e)}
+			@skip_lines = []
 			@other = nil
 			instance_eval &block
 		end
@@ -53,6 +54,8 @@ class UniversalAccessLogParser
 		end
 
 		# getters
+		attr_reader :skip_lines
+
 		def regexp
 			ss = (@surrounded_by[0] or '')
 			se = (@surrounded_by[1] or '')
@@ -94,6 +97,10 @@ class UniversalAccessLogParser
 
 		def surrounded_by(sstart, send, &block)
 			push ElementGroup.new(@separator, [sstart, send], &block)
+		end
+
+		def skip_line(regexp)
+			@skip_lines << regexp
 		end
 
 		def element(name, regexp, options = {}, &parser)
@@ -172,7 +179,9 @@ class UniversalAccessLogParser
 
 			@io.each_line do |line|
 				begin
-					yield @parser.parse(line)
+					line.strip!
+					next if @parser.skip?(line)
+					yield @parser.parse(line.strip)
 					successes += 1
 				rescue ParsingError
 					failures += 1
@@ -183,13 +192,17 @@ class UniversalAccessLogParser
 
 		def each!
 			@io.each_line do |line|
-					yield @parser.parse(line)
+				line.strip!
+				next if @parser.skip?(line)
+				yield  @parser.parse(line.strip)
 			end
 		end
 
 		def each_parsed!
 			@io.each_line do |line|
-					yield @parser.parse(line).parse!
+				line.strip!
+				next if @parser.skip?(line)
+				yield @parser.parse(line.strip).parse!
 			end
 		end
 
@@ -205,6 +218,7 @@ class UniversalAccessLogParser
 		@elements = ElementGroup.new(' ', &block)
 		@elements.other # by default expect more elements
 
+		@skip_lines = @elements.skip_lines.map{|s| Regexp.new(s)}
 		@regexp = Regexp.new('^' + @elements.regexp + '$')
 
 		@names = @elements.names
@@ -267,6 +281,13 @@ class UniversalAccessLogParser
 					self.new{ #{name} }
 			end
 		"""
+	end
+
+	def skip?(line)
+		@skip_lines.each do |regexp|
+			return true if line =~ regexp
+		end
+		return false
 	end
 
 	def parse(line)

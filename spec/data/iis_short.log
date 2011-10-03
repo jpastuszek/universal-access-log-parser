@@ -1,0 +1,10 @@
+#Software: Microsoft Internet Information Services 7.5
+#Version: 1.0
+#Date: 2011-06-18 00:00:00
+#Fields: date time s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) sc-status sc-substatus sc-win32-status time-taken
+2011-06-18 00:00:00 38.111.242.43 GET /blahs/bulgaria/teeth-whitening/map/index.aspx - 80 - 66.249.72.231 Mediapartners-Google 200 0 0 343
+2011-06-18 00:00:00 38.111.242.43 GET /physiotherapy/uk/lancashire/bryn/peripheral-joint-manipulation/index.aspx - 80 - 66.249.72.16 Mozilla/5.0+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) 200 0 0 609
+2011-06-18 00:00:01 38.111.242.43 GET /blahs/canada/ontario/kawartha-lakes/bone-graft/index.aspx - 80 - 66.249.72.231 Mozilla/5.0+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) 200 0 0 4296
+2011-06-18 00:00:01 38.111.242.43 GET /traditional-chinese-medicine-practitioners/ireland/county-westmeath/traditional-chinese-medicine-consultation/index.aspx - 80 - 66.249.72.204 Mozilla/5.0+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) 301 0 0 187
+2011-06-18 00:00:01 38.111.242.43 GET /blahs/canada/ontario/pickering/sedation-dental/index.aspx - 80 - 66.249.72.16 Mozilla/5.0+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) 200 0 0 2640
+2011-06-18 00:00:01 38.111.242.43 GET /blahs/uk/leicestershire/little-bowden/invisalign/index.aspx - 80 - 87.250.252.241 Mozilla/5.0+(compatible;+YandexBot/3.0;++http://yandex.com/bots) 200 0 0 5656
