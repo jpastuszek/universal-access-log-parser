@@ -45,8 +45,8 @@ class UniversalAccessLogParser
 
 		class Integrating < ElementGroup
 			def initialize(parent, separator, &block)
-				super(parent, &block)
 				@separator = separator
+				super(parent, &block)
 			end
 
 			attr_reader :separator
@@ -54,8 +54,11 @@ class UniversalAccessLogParser
 
 		class Root < Integrating
 			def initialize(separator, &block)
+				@skip_lines = []
 				super(nil, separator, &block)
 			end
+
+			attr_reader :skip_lines
 
 			def regexp
 				super + "(|#{separator}.*)"
@@ -71,13 +74,18 @@ class UniversalAccessLogParser
 					s.sub(Regexp.new("^#{separator}"), '')
 				}
 			end
+
+			# root specific DSL
+			def skip_line(regexp)
+				@skip_lines << regexp
+			end
 		end
 
 		class Surrounding < ElementGroup
 			def initialize(parent, left, right, &block)
-				super(parent, &block)
 				@left = left
 				@right = right
+				super(parent, &block)
 			end
 
 			def regexp
@@ -87,8 +95,8 @@ class UniversalAccessLogParser
 
 		class Optional < ElementGroup
 			def initialize(parent, name, &block)
-				super(parent, &block)
 				@group_name = name
+				super(parent, &block)
 			end
 
 			def regexp
@@ -106,8 +114,6 @@ class UniversalAccessLogParser
 
 		def initialize(parent, &block)
 			@parent = parent
-			@skip_lines = []
-			@other = nil
 			instance_eval &block
 		end
 
@@ -116,9 +122,6 @@ class UniversalAccessLogParser
 			define_method(name, &block)
 		end
 
-		# getters
-		attr_reader :skip_lines
-		
 		def separator
 			raise ParsingError, 'Integrating ElementGroup not defined in ElementGroup hierarhy' unless @parent
 			@parent.separator
@@ -181,10 +184,6 @@ class UniversalAccessLogParser
 			surrounding_group(left, right, &block)
 		end
 
-		def skip_line(regexp)
-			@skip_lines << regexp
-		end
-
 		def single_quoted(&block)
 			surrounded_by("'", "'", &block)
 		end
@@ -228,10 +227,6 @@ class UniversalAccessLogParser
 			greedy = true
 			greedy = options[:greedy] if options.member? :greedy
 			element(name, ".*#{greedy ? '?' : ''}", options){|s| s}
-		end
-
-		def other
-			@other = "($|#{@separator}.*)"
 		end
 	end
 
@@ -291,7 +286,6 @@ class UniversalAccessLogParser
 		@@parser_id += 1
 
 		@elements = ElementGroup::Root.new(' ', &block)
-		@elements.other # by default expect more elements
 
 		@skip_lines = @elements.skip_lines.map{|s| Regexp.new(s)}
 		@regexp = Regexp.new('^' + @elements.regexp + '$')
