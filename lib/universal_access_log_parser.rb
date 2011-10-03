@@ -60,6 +60,17 @@ class UniversalAccessLogParser
 			def regexp
 				super + "(|#{separator}.*)"
 			end
+
+			def names
+				super << :other
+			end
+
+			def parsers
+				super << lambda{ |s|
+					return nil if s.empty?
+					s.sub(Regexp.new("^#{separator}"), '')
+				}
+			end
 		end
 
 		class Surrounding < ElementGroup
@@ -118,32 +129,23 @@ class UniversalAccessLogParser
 		end
 		
 		def names
-			n = []
-			n += map do |e|
+			map do |e|
 				if e.kind_of? ElementGroup
 					e.names
 				else
 					e.name
 				end
 			end.flatten
-			n << :other if @other
-			n
 		end
 
 		def parsers
-			p = []
-			p += map do |e|
+			map do |e|
 				if e.kind_of? ElementGroup
 					e.parsers
 				else
 					e.parser
 				end
 			end.flatten
-			p << lambda do |s|
-				return nil if s.empty?
-				s.sub(Regexp.new("^#{@separator}"), '')
-			end if @other
-			p
 		end
 
 		# core DSL

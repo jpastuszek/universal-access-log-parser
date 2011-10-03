@@ -16,7 +16,7 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				e.names.should == [:test1, :test2, :test3, :test4, :test5, :test6]
+				e.names.should == [:test1, :test2, :test3, :test4, :test5, :test6, :other]
 			end
 
 			it '#regexp should return element regexp joined by separator' do
@@ -44,7 +44,7 @@ describe 'UniversalAccessLogParser' do
 					element :test5, 'test5'
 					element :test6, 'test6'
 				end
-				e.parsers.should have(6).elements
+				e.parsers.should have(7).elements
 			end
 		end
 	end
