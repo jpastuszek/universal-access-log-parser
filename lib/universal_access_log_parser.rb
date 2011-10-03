@@ -187,6 +187,12 @@ class UniversalAccessLogParser
 			end
 		end
 
+		def each_parsed!
+			@io.each_line do |line|
+					yield @parser.parse(line).parse!
+			end
+		end
+
 		def close
 			@io.close
 		end
