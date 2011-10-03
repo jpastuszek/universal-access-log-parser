@@ -364,6 +364,7 @@ describe 'UniversalAccessLogParser' do
 				end
 			end
 
+			entries.should have(3).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
 			entries[1].remote_host.should == IP.new('123.123.123.1')
 			entries[2].remote_host.should == IP.new('123.123.123.2')
@@ -377,6 +378,7 @@ describe 'UniversalAccessLogParser' do
 			end
 			iter.close
 
+			entries.should have(3).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
 			entries[1].remote_host.should == IP.new('123.123.123.1')
 			entries[2].remote_host.should == IP.new('123.123.123.2')
@@ -393,7 +395,7 @@ describe 'UniversalAccessLogParser' do
 			@iter = parser.parse_file(File.dirname(__FILE__) + '/data/bad1.log')
 		end
 
-		it 'with each it should not rais exceptions' do
+		it 'with each it should not raise exceptions' do
 			entries = []
 			lambda {
 				@iter.each do |entry|
@@ -401,6 +403,7 @@ describe 'UniversalAccessLogParser' do
 				end
 			}.should_not raise_error
 
+			entries.should have(2).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
 			# line skipped
 			entries[1].remote_host.should == IP.new('123.123.123.2')
@@ -417,9 +420,22 @@ describe 'UniversalAccessLogParser' do
 				stats.successes.should == 2
 			}.should_not raise_error
 
+			entries.should have(2).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
 			# line skipped
 			entries[1].remote_host.should == IP.new('123.123.123.2')
+		end
+
+		it 'with each! it should should raise UniversalAccessLogParser::ParsingError' do
+			entries = []
+			lambda {
+				@iter.each! do |entry|
+					entries << entry
+				end
+			}.should raise_error UniversalAccessLogParser::ParsingError
+
+			entries.should have(1).entries
+			entries[0].remote_host.should == IP.new('123.123.123.0')
 		end
 
 		after :each do

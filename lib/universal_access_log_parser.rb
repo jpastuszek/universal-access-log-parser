@@ -172,6 +172,12 @@ class UniversalAccessLogParser
 			Stats.new(failures, successes)
 		end
 
+		def each!
+			@io.each_line do |line|
+					yield @parser.parse(line)
+			end
+		end
+
 		def close
 			@io.close
 		end
