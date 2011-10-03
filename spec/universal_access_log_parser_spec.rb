@@ -382,5 +382,49 @@ describe 'UniversalAccessLogParser' do
 			entries[2].remote_host.should == IP.new('123.123.123.2')
 		end
 	end
+
+	describe 'bad data handling' do
+		before :each do
+			parser = UniversalAccessLogParser.new do
+				ip :remote_host
+				string :logname, :nil_on => '-'
+				string :user, :nil_on => '-'
+			end
+			@iter = parser.parse_file(File.dirname(__FILE__) + '/data/bad1.log')
+		end
+
+		it 'with each it should not rais exceptions' do
+			entries = []
+			lambda {
+				@iter.each do |entry|
+					entries << entry
+				end
+			}.should_not raise_error
+
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+			# line skipped
+			entries[1].remote_host.should == IP.new('123.123.123.2')
+		end
+
+		it 'with each it should provide parse failure statistics' do
+			entries = []
+			lambda {
+				stats = @iter.each do |entry|
+					entries << entry
+				end
+
+				stats.failures.should == 1
+				stats.successes.should == 2
+			}.should_not raise_error
+
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+			# line skipped
+			entries[1].remote_host.should == IP.new('123.123.123.2')
+		end
+
+		after :each do
+			@iter.close
+		end
+	end
 end
 

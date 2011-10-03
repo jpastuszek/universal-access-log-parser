@@ -149,15 +149,27 @@ class UniversalAccessLogParser
 	end
 
 	class EntryIterator
+		class Stats < Struct.new(:failures, :successes)
+		end
+
 		def initialize(parser, io)
 			@parser = parser
 			@io = io
 		end
 
 		def each
+			failures = 0
+			successes = 0
+
 			@io.each_line do |line|
-				yield @parser.parse(line)
+				begin
+					yield @parser.parse(line)
+					successes += 1
+				rescue ParsingError
+					failures += 1
+				end
 			end
+			Stats.new(failures, successes)
 		end
 
 		def close
