@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "lib/common_parsers.rb",
-    "lib/universal_access_log_parser.rb",
+    "lib/universal-access-log-parser.rb",
     "spec/common_parsers_spec.rb",
     "spec/data/apache_access.log",
     "spec/data/bad1.log",
@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
     "spec/data/test1.log",
     "spec/data/test2.log",
     "spec/spec_helper.rb",
-    "spec/universal_access_log_parser_spec.rb",
+    "spec/universal-access-log-parser-spec.rb",
     "universal-access-log-parser.gemspec"
   ]
   s.homepage = "http://github.com/jpastuszek/universal-access-log-parser"
