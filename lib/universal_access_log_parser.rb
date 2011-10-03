@@ -261,6 +261,7 @@ class UniversalAccessLogParser
 				@strings.keys.each do |name|
 					send(name)
 				end
+				self
 			end
 
 			def to_hash

@@ -549,6 +549,7 @@ describe 'UniversalAccessLogParser' do
 			}.should raise_error UniversalAccessLogParser::ElementParsingError
 
 			entries.should have(1).entries
+			entries[0].remote_host.should == IP.new('123.123.123.0')
 		end
 
 		after :each do

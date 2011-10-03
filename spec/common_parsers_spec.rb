@@ -269,6 +269,9 @@ describe UniversalAccessLogParser do
 					entries << entry
 				end
 			end
+			
+			entries.should have(6).entries
+			entries[5].url.should == '/blahs/uk/leicestershire/little-bowden/invisalign/index.aspx'
 		end
 	end
 end
