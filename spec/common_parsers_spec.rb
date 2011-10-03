@@ -265,7 +265,7 @@ describe UniversalAccessLogParser do
 			entries = []
 			parser = UniversalAccessLogParser.iis
 			parser.parse_file(File.dirname(__FILE__) + '/data/iis_short.log') do |iter|
-				iter.each! do |entry|
+				iter.each_parsed! do |entry|
 					entries << entry
 				end
 			end
