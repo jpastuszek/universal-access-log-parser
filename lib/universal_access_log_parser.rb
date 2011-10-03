@@ -76,17 +76,25 @@ class UniversalAccessLogParser
 
 		class Optional < ElementGroup
 			def initialize(parent, name, &block)
-				super(parent, name, &block)
+				super(parent, &block)
+				@group_name = name
 			end
 
 			def regexp
 				'(|' + super + ')'
 			end
+
+			def names
+				super.unshift @group_name
+			end
+
+			def parsers
+				super.unshift lambda{ |s| s.empty? ? nil : s }
+			end
 		end
 
-		def initialize(parent, group_name = nil, &block)
+		def initialize(parent, &block)
 			@parent = parent
-			@group_name = group_name
 			@skip_lines = []
 			@other = nil
 			instance_eval &block
@@ -99,13 +107,6 @@ class UniversalAccessLogParser
 
 		# getters
 		attr_reader :skip_lines
-
-		#def regexp
-			#ss = (@surrounded_by[0] or '')
-			#se = (@surrounded_by[1] or '')
-
-			#ss + map{|e| e.regexp}.join(@separator) + se + (@other ? @other : '')
-		#end
 		
 		def separator
 			raise ParsingError, 'Integrating ElementGroup not defined in ElementGroup hierarhy' unless @parent
@@ -117,9 +118,7 @@ class UniversalAccessLogParser
 		end
 		
 		def names
-			#TODO: refactor this mess!
 			n = []
-			n << @group_name if @group_name
 			n += map do |e|
 				if e.kind_of? ElementGroup
 					e.names
@@ -133,7 +132,6 @@ class UniversalAccessLogParser
 
 		def parsers
 			p = []
-			p << lambda{|s| s.empty? ? nil : s} if @group_name
 			p += map do |e|
 				if e.kind_of? ElementGroup
 					e.parsers
