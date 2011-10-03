@@ -442,5 +442,38 @@ describe 'UniversalAccessLogParser' do
 			@iter.close
 		end
 	end
+
+	describe 'delayed entry parsing' do
+		before :each do
+			parser = UniversalAccessLogParser.new do
+				ip :remote_host
+				string :logname, :nil_on => '-'
+				string :user, :nil_on => '-'
+			end
+			@iter = parser.parse_file(File.dirname(__FILE__) + '/data/bad2.log')
+		end
+
+		it 'should report errors regarding element parsing on element access' do
+			entries = []
+			lambda {
+				@iter.each do |entry|
+					entries << entry
+				end
+			}.should_not raise_error
+
+			entries.should have(3).entries
+			entries[0].remote_host.should == IP.new('123.123.123.0')
+
+			lambda {
+				entries[1].remote_host
+			}.should raise_error UniversalAccessLogParser::ElementParsingError
+
+			entries[2].remote_host.should == IP.new('123.123.123.2')
+		end
+
+		after :each do
+			@iter.close
+		end
+	end
 end
 

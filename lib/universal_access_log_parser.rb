@@ -1,7 +1,7 @@
 require 'ip'
 
 class UniversalAccessLogParser
-	class ParsingError < RuntimeError
+	class ParsingError < ArgumentError
 		def initialize(msg, parser, log_line)
 			@parser = parser
 			@log_line = log_line
@@ -9,6 +9,15 @@ class UniversalAccessLogParser
 		end
 
 		attr_reader :parser, :log_line
+	end
+
+	class ElementParsingError < ArgumentError
+		def initialize(e)
+			@error = e
+			super("argument parsing error: #{e}")
+		end
+
+		attr_reader :error
 	end
 
 	class ElementGroup < Array
@@ -205,7 +214,11 @@ class UniversalAccessLogParser
 					class_eval """
 						def #{name}
 							return @cache[:#{name}] if @cache.member? :#{name}
-							value = @parsers[:#{name}].call(@strings[:#{name}])
+							begin
+								value = @parsers[:#{name}].call(@strings[:#{name}])
+							rescue => e
+								raise ElementParsingError.new(e)
+							end
 							@cache[:#{name}] = value
 							value
 						end
