@@ -208,49 +208,49 @@ describe 'UniversalAccessLogParser' do
 	end
 
 	describe 'with quoted/surrounded strings' do
-			it 'by []' do
-				p = UniversalAccessLogParser.new do
-					string :test1
-					surrounded_by '[', ']' do
-						date :date, '%d.%b.%Y %H:%M:%S %z'
-					end
-					string :test2
-				end.parse('hello [29.Sep.2011 17:38:06 +0100] world')
+		it 'by []' do
+			p = UniversalAccessLogParser.new do
+				string :test1
+				surrounded_by '[', ']' do
+					date :date, '%d.%b.%Y %H:%M:%S %z'
+				end
+				string :test2
+			end.parse('hello [29.Sep.2011 17:38:06 +0100] world')
 
-				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
-				p.test1.should == 'hello'
-				p.test2.should == 'world'
-			end
+			p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+			p.test1.should == 'hello'
+			p.test2.should == 'world'
+		end
 
-			it 'single quoted' do
-				p = UniversalAccessLogParser.new do
-					string :test1
-					single_quoted do
-						date :date, '%d.%b.%Y %H:%M:%S %z'
-					end
-					string :test2
-				end.parse("hello '29.Sep.2011 17:38:06 +0100' world")
+		it 'single quoted' do
+			p = UniversalAccessLogParser.new do
+				string :test1
+				single_quoted do
+					date :date, '%d.%b.%Y %H:%M:%S %z'
+				end
+				string :test2
+			end.parse("hello '29.Sep.2011 17:38:06 +0100' world")
 
-				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
-				p.test1.should == 'hello'
-				p.test2.should == 'world'
-			end
+			p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+			p.test1.should == 'hello'
+			p.test2.should == 'world'
+		end
 
-			it 'double quoted' do
-				p = UniversalAccessLogParser.new do
-					string :test1
-					double_quoted do
-						date :date, '%d.%b.%Y %H:%M:%S %z'
-						integer :number
-					end
-					string :test2
-				end.parse('hello "29.Sep.2011 17:38:06 +0100 123" world')
+		it 'double quoted' do
+			p = UniversalAccessLogParser.new do
+				string :test1
+				double_quoted do
+					date :date, '%d.%b.%Y %H:%M:%S %z'
+					integer :number
+				end
+				string :test2
+			end.parse('hello "29.Sep.2011 17:38:06 +0100 123" world')
 
-				p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
-				p.number.should == 123
-				p.test1.should == 'hello'
-				p.test2.should == 'world'
-			end
+			p.date.to_i.should == Time.parse('+Thu Sep 29 17:38:06 +0100 2011').to_i
+			p.number.should == 123
+			p.test1.should == 'hello'
+			p.test2.should == 'world'
+		end
 	end
 
 	it 'can parse log with format described in new block' do
