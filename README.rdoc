@@ -1,9 +1,88 @@
 = universal-access-log-parser
 
-Description goes here.
+== Installation
+
+    gem install universal-access-log-parser
+
+== Usage
+
+    require 'universal-access-log-parser'
+
+	# use predefined parser
+	parser = UniversalAccessLogParser.apache_combined
+
+	# or extend it inline
+	parser = UniversalAccessLogParser.new do
+		# reuse predefined element set
+		apache_combined
+
+		# add your own
+		string :varnish
+		string :varnish_status, :nil_on => '-'
+		string :initial_varnish_status, :nil_on => '-'
+		integer :cache_hits
+		integer :cache_ttl, :nil_on => '-'
+		integer :cache_age
+	end
+
+	# or define new parser
+	UniversalAccessLogParser.parser(:iis) do
+        skip_line '^#'
+        date_iis :time
+        ip :server_ip
+        string :method
+        string :url
+        string :query, :nil_on => '-'
+        integer :port
+        string :username, :nil_on => '-'
+        ip :client_ip
+        string :user_agent, :nil_on => '-', :process => lambda{|s| s.tr('+', ' ')}
+        integer :status
+        integer :substatus
+        integer :win32_status
+		integer :duration, :process => lambda{|i| i.to_f / 1000}
+	end
+	parser = UniversalAccessLogParser.iis
+
+	# and iterate entries with #each - won't raise errors
+	stats = parser.parse_file('access.log').each |entry|
+		puts entry.time
+		puts entry.cache_age
+	end
+
+	# and get parsing stats
+	puts stats.failures
+	puts stats.successes	
+
+	# or wait for exception with #each!
+	parser.parse_file('access.log').each! |entry|
+		puts entry.time
+		puts entry.cache_age
+	end # will raise UniversalAccessLogParser::ParsingError on line parsing error
+
+	# data elements wont be parsed until accessed, so if you are not interested in some elements you won't waste time
+	stats = parser.parse_file('access.log').each |entry|
+		# entry.time not parsed yet - Time object is not created
+		puts entry.time # this will parse time and create Time object - this may raise UniversalAccessLogParser::ElementParsingError!
+		puts entry.time # now Time object is returned from cache
+		puts entry.cache_age
+
+		# parse all elements
+		entry.parse!
+
+		# will also parse all elements and return hash map of them
+		entry.to_hash 
+	end
+
+	# iterate and parse all data with #each_parsed! - if this won't raise, all log lines are parsing fine including elements
+	parser.parse_file('access.log').each_parsed! |entry|
+		puts entry.time # already in cache
+		puts entry.cache_age # already in cache
+	end # will raise on line and element parsing error
 
 == Contributing to universal-access-log-parser
- 
+
+* Please add more common parsers to lib/common_parsers.rb and rspec in spec/common_parsers_spec.rb or send me a gist
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
 * Fork the project
