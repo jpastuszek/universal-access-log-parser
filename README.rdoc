@@ -78,7 +78,7 @@
     parser.parse_file('access.log').each_parsed! |entry|
         puts entry.time # already in cache
         puts entry.cache_age # already in cache
-    end # will raise on line and element parsing error
+    end # will raise on line and element parsing error - try rescuing UniversalAccessLogParser::ParserError to catch both
 
 == Contributing to universal-access-log-parser
 

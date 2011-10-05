@@ -4,7 +4,7 @@ class UniversalAccessLogParser
 	class ParserError < ArgumentError
 	end
 
-	class ParsingError < ArgumentError
+	class ParsingError < ParserError
 		def initialize(msg, parser, line)
 			@parser = parser
 			@line = line
@@ -14,7 +14,7 @@ class UniversalAccessLogParser
 		attr_reader :parser, :line
 	end
 
-	class ElementParsingError < ArgumentError
+	class ElementParsingError < ParserError
 		def initialize(e)
 			@error = e
 			super("argument parsing error: #{e}")
