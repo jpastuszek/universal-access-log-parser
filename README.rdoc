@@ -40,7 +40,7 @@
         integer :status
         integer :substatus
         integer :win32_status
-    	integer :duration, :process => lambda{|i| i.to_f / 1000}
+        integer :duration, :process => lambda{|i| i.to_f / 1000}
     end
     parser = UniversalAccessLogParser.iis
 
@@ -70,7 +70,7 @@
         # parse all elements
         entry.parse!
 
-        # will also parse all elements and return hash map of them
+        # this will also parse all elements and return hash map of them
         entry.to_hash 
     end
 
