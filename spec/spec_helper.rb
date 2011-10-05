@@ -9,3 +9,12 @@ Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 RSpec.configure do |config|
   
 end
+
+def open_files
+	r, w = IO.pipe
+	out = r.fileno
+	r.close
+	w.close
+	out - 1
+end
+

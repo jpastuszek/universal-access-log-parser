@@ -239,9 +239,10 @@ class UniversalAccessLogParser
 		class Stats < Struct.new(:failures, :successes)
 		end
 
-		def initialize(parser, io)
+		def initialize(parser, io, close_io)
 			@parser = parser
 			@io = io
+			@close_io = close_io
 		end
 
 		def each
@@ -258,22 +259,31 @@ class UniversalAccessLogParser
 					failures += 1
 				end
 			end
+			@io.close if @close_io
 			Stats.new(failures, successes)
 		end
 
 		def each!
-			@io.each_line do |line|
-				line.strip!
-				next if @parser.skip?(line)
-				yield  @parser.parse(line.strip)
+			begin
+				@io.each_line do |line|
+					line.strip!
+					next if @parser.skip?(line)
+					yield  @parser.parse(line.strip)
+				end
+			ensure
+				@io.close if @close_io
 			end
 		end
 
 		def each_parsed!
-			@io.each_line do |line|
-				line.strip!
-				next if @parser.skip?(line)
-				yield @parser.parse(line.strip).parse!
+			begin
+				@io.each_line do |line|
+					line.strip!
+					next if @parser.skip?(line)
+					yield @parser.parse(line.strip).parse!
+				end
+			ensure
+				@io.close if @close_io
 			end
 		end
 
@@ -389,18 +399,14 @@ class UniversalAccessLogParser
 		@parsed_log_entry_class.new(@names, @parsers, strings)
 	end
 
-	def parse_io(io)
-		EntryIterator.new(self, io)
+	def parse_io(io, close_io = false)
+		EntryIterator.new(self, io, close_io)
 	end
 
 	def parse_file(file_path)
-		if block_given?
-			File.open(file_path) do |io|
-				yield parse_io(io)
-			end
-		else
-			parse_io(File.new(file_path))
-		end
+		io = File.open(file_path)
+		# io will be closed after each
+		parse_io(io, true)
 	end
 
 	def inspect

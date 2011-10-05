@@ -422,13 +422,14 @@ describe 'UniversalAccessLogParser' do
 			end
 		end
 
-		it 'should parse file' do
+		it 'should parse file and not leak fd\'s' do
 			entries = []
-			@parser.parse_file(File.dirname(__FILE__) + '/data/test1.log') do |iter|
-				iter.each do |entry|
-					entries << entry
-				end
+
+			fds = open_files
+			@parser.parse_file(File.dirname(__FILE__) + '/data/test1.log').each do |entry|
+				entries << entry
 			end
+			fds.should == open_files
 
 			entries.should have(3).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
@@ -436,18 +437,15 @@ describe 'UniversalAccessLogParser' do
 			entries[2].remote_host.should == IP.new('123.123.123.2')
 		end
 
-		it 'should parse file without block' do
-			entries = []
+		it 'should raise IOError if another attempt of each is tried' do
 			iter = @parser.parse_file(File.dirname(__FILE__) + '/data/test1.log')
 			iter.each do |entry|
-				entries << entry
 			end
-			iter.close
 
-			entries.should have(3).entries
-			entries[0].remote_host.should == IP.new('123.123.123.0')
-			entries[1].remote_host.should == IP.new('123.123.123.1')
-			entries[2].remote_host.should == IP.new('123.123.123.2')
+			lambda {
+				iter.each do |entry|
+				end
+			}.should raise_error IOError
 		end
 
 		it 'should skip lines maching regexp' do
@@ -463,7 +461,6 @@ describe 'UniversalAccessLogParser' do
 			iter.each do |entry|
 				entries << entry
 			end
-			iter.close
 
 			entries.should have(3).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
@@ -523,10 +520,6 @@ describe 'UniversalAccessLogParser' do
 
 			entries.should have(1).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
-		end
-
-		after :each do
-			@iter.close
 		end
 	end
 
@@ -616,10 +609,6 @@ describe 'UniversalAccessLogParser' do
 
 			entries.should have(1).entries
 			entries[0].remote_host.should == IP.new('123.123.123.0')
-		end
-
-		after :each do
-			@iter.close
 		end
 	end
 

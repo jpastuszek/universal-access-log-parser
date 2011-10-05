@@ -188,15 +188,9 @@ describe UniversalAccessLogParser do
 		it 'Apache combined file' do
 			parser = UniversalAccessLogParser.apache_combined
 			entries = []
-			begin
-			parser.parse_file(File.dirname(__FILE__) + '/data/apache_access.log') do |iter|
-				iter.each_parsed! do |entry|
-					entries << entry
-				end
-			end
-			rescue => e
-				p parser
-				puts e.line
+
+			parser.parse_file(File.dirname(__FILE__) + '/data/apache_access.log').each_parsed! do |entry|
+				entries << entry
 			end
 			
 			entries.should have(178).entries
@@ -306,10 +300,8 @@ describe UniversalAccessLogParser do
 		it 'IIS log file' do
 			entries = []
 			parser = UniversalAccessLogParser.iis
-			parser.parse_file(File.dirname(__FILE__) + '/data/iis_short.log') do |iter|
-				iter.each_parsed! do |entry|
-					entries << entry
-				end
+			parser.parse_file(File.dirname(__FILE__) + '/data/iis_short.log').each_parsed! do |entry|
+				entries << entry
 			end
 			
 			entries.should have(6).entries
