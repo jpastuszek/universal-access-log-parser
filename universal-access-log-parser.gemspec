@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "universal-access-log-parser"
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jakub Pastuszek"]
-  s.date = "2011-10-03"
+  s.date = "2011-10-05"
   s.description = "Meta parser that allows you to define new parser with ruby DSL to match access log file format you are willing to parse or use one of the predefined parsers like Apache common, IIS and more"
   s.email = "jpastuszek@gmail.com"
   s.extra_rdoc_files = [
@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
     "spec/data/test1.log",
     "spec/data/test2.log",
     "spec/spec_helper.rb",
-    "spec/universal-access-log-parser-spec.rb",
+    "spec/universal-access-log-parser_spec.rb",
     "universal-access-log-parser.gemspec"
   ]
   s.homepage = "http://github.com/jpastuszek/universal-access-log-parser"
