@@ -1,0 +1,26 @@
+#!/usr/bin/ruby
+require 'unprof'
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', '..', 'lib'))
+require 'universal-access-log-parser'
+
+$lines = 0
+
+def progress
+	puts $lines
+end
+
+UniversalAccessLogParser.new do
+        apache_combined
+        string :handling, :process => lambda{|s| s.to_sym}
+        string :current_status, :nil_on => '-'
+        string :initial_status, :nil_on => '-'
+        integer :cache_hits
+        float :cache_ttl, :nil_on => '-'
+        integer :cache_age
+        float :response_time
+end.parse_file(File.join(File.dirname(__FILE__), '..', 'data', 'varnishncsa-short.log')).each! do
+	$lines += 1
+	progress if $lines % 10 == 0
+end
+
