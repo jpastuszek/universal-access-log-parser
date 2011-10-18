@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "universal-access-log-parser"
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jakub Pastuszek"]
-  s.date = "2011-10-05"
+  s.date = "2011-10-18"
   s.description = "Meta parser that allows you to define new parser with ruby DSL to match access log file format you are willing to parse or use one of the predefined parsers like Apache common, IIS and more"
   s.email = "jpastuszek@gmail.com"
   s.extra_rdoc_files = [
@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
     "VERSION",
     "lib/common_parsers.rb",
     "lib/universal-access-log-parser.rb",
+    "spec/bin/benchmark",
     "spec/common_parsers_spec.rb",
     "spec/data/apache_access.log",
     "spec/data/bad1.log",
@@ -53,12 +54,14 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.6.4"])
       s.add_development_dependency(%q<rcov>, [">= 0"])
+      s.add_development_dependency(%q<ruby-prof>, ["~> 0.10.8"])
     else
       s.add_dependency(%q<ruby-ip>, [">= 0"])
       s.add_dependency(%q<rspec>, ["~> 2.3.0"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
       s.add_dependency(%q<rcov>, [">= 0"])
+      s.add_dependency(%q<ruby-prof>, ["~> 0.10.8"])
     end
   else
     s.add_dependency(%q<ruby-ip>, [">= 0"])
@@ -66,6 +69,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.6.4"])
     s.add_dependency(%q<rcov>, [">= 0"])
+    s.add_dependency(%q<ruby-prof>, ["~> 0.10.8"])
   end
 end
 
