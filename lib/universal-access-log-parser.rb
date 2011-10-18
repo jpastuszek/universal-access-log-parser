@@ -392,7 +392,11 @@ class UniversalAccessLogParser
 	end
 
 	def parse(line)
-		matched, *strings = @regexp.match(line).to_a
+		begin
+			matched, *strings = @regexp.match(line).to_a
+		rescue ArgumentError => e
+			raise ParsingError.new("parser regexp error: #{e}", self, line)
+		end
 
 		raise ParsingError.new('parser regexp did not match log line', self, line) if strings.empty?
 
